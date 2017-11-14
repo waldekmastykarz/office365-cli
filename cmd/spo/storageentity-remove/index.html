@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../../../img/favicon.ico">
+  <title>storageentity remove - Office 365 CLI</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../../../css/highlight.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "storageentity remove";
+    var mkdocs_page_input_path = "cmd/spo/storageentity-remove.md";
+    var mkdocs_page_url = "/cmd/spo/storageentity-remove/";
+  </script>
+  
+  <script src="../../../js/jquery-2.1.1.min.js"></script>
+  <script src="../../../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../../../js/highlight.pack.js"></script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../../.." class="icon icon-home"> Office 365 CLI</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../..">Home</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Commands</span>
+    <ul class="subnav">
+                <li class=" current">
+                    
+    <span class="caption-text">SharePoint Online (spo)</span>
+    <ul class="subnav">
+                <li class="toctree-l3">
+                    
+    <a class="" href="../connect/">connect</a>
+                </li>
+                <li class="toctree-l3">
+                    
+    <a class="" href="../disconnect/">disconnect</a>
+                </li>
+                <li class="toctree-l3">
+                    
+    <a class="" href="../status/">status</a>
+                </li>
+                <li class="toctree-l3">
+                    
+    <a class="" href="../storageentity-get/">storageentity get</a>
+                </li>
+                <li class="toctree-l3">
+                    
+    <a class="" href="../storageentity-list/">storageentity list</a>
+                </li>
+                <li class="toctree-l3 current">
+                    
+    <a class="current" href="./">storageentity remove</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l4"><a href="#spo-storageentity-remove">spo storageentity remove</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l5" href="#usage">Usage</a></li>
+        
+            <li><a class="toctree-l5" href="#options">Options</a></li>
+        
+            <li><a class="toctree-l5" href="#remarks">Remarks</a></li>
+        
+            <li><a class="toctree-l5" href="#examples">Examples</a></li>
+        
+            <li><a class="toctree-l5" href="#more-information">More information</a></li>
+        
+        </ul>
+    
+
+    </ul>
+                </li>
+                <li class="toctree-l3">
+                    
+    <a class="" href="../storageentity-set/">storageentity set</a>
+                </li>
+                <li class="toctree-l3">
+                    
+    <a class="" href="../tenant-cdn-get/">tenant cdn get</a>
+                </li>
+                <li class="toctree-l3">
+                    
+    <a class="" href="../tenant-cdn-origin-list/">tenant cdn origin list</a>
+                </li>
+                <li class="toctree-l3">
+                    
+    <a class="" href="../tenant-cdn-origin-remove/">tenant cdn origin remove</a>
+                </li>
+                <li class="toctree-l3">
+                    
+    <a class="" href="../tenant-cdn-origin-set/">tenant cdn origin set</a>
+                </li>
+                <li class="toctree-l3">
+                    
+    <a class="" href="../tenant-cdn-policy-list/">tenant cdn policy list</a>
+                </li>
+                <li class="toctree-l3">
+                    
+    <a class="" href="../tenant-cdn-policy-set/">tenant cdn policy set</a>
+                </li>
+                <li class="toctree-l3">
+                    
+    <a class="" href="../tenant-cdn-set/">tenant cdn set</a>
+                </li>
+    </ul>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">About</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../../../about/why-cli/">Why this CLI</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../../about/release-notes/">Release notes</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../../about/license/">License</a>
+                </li>
+    </ul>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../..">Office 365 CLI</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../..">Docs</a> &raquo;</li>
+    
+      
+        
+          <li>Commands &raquo;</li>
+        
+      
+        
+          <li>SharePoint Online (spo) &raquo;</li>
+        
+      
+    
+    <li>storageentity remove</li>
+    <li class="wy-breadcrumbs-aside">
+      
+        <a href="http://github.com/SharePoint/office365-cli/blob/master/docs/manual/docs/cmd/spo/storageentity-remove.md"
+          class="icon icon-github"> Edit on GitHub</a>
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="spo-storageentity-remove">spo storageentity remove</h1>
+<p>Removes tenant property stored on the specified SharePoint Online app catalog</p>
+<h2 id="usage">Usage</h2>
+<pre><code class="sh">spo storageentity remove [options]
+</code></pre>
+
+<h2 id="options">Options</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--help</code></td>
+<td>output usage information</td>
+</tr>
+<tr>
+<td><code>-u, --appCatalogUrl &lt;appCatalogUrl&gt;</code></td>
+<td>URL of the app catalog site</td>
+</tr>
+<tr>
+<td><code>-k, --key &lt;key&gt;</code></td>
+<td>Name of the tenant property to retrieve</td>
+</tr>
+<tr>
+<td><code>--confirm</code></td>
+<td>Don't prompt for confirming removal of a tenant property</td>
+</tr>
+<tr>
+<td><code>--verbose</code></td>
+<td>Runs command with verbose logging</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Important:</strong> before using this command, connect to a SharePoint Online tenant admin site, using the <a href="../connect/">spo connect</a> command.</p>
+</blockquote>
+<h2 id="remarks">Remarks</h2>
+<p>To remove a tenant property, you have to first connect to a tenant admin site using the
+<a href="../connect/">spo connect</a> command, eg. <code>spo connect https://contoso-admin.sharepoint.com</code>.
+If you are connected to a different site and will try to manage tenant properties,
+you will get an error.</p>
+<p>Tenant properties are stored in the app catalog site associated with that tenant.
+To remove a property, you have to specify the absolute URL of the app catalog site.
+If you specify the URL of a site different than the app catalog, you will get an access denied error.</p>
+<h2 id="examples">Examples</h2>
+<pre><code class="sh">spo storageentity remove -k AnalyticsId -u https://contoso.sharepoint.com/sites/appcatalog
+</code></pre>
+
+<p>remove the AnalyticsId tenant property. Yields a confirmation prompt before actually
+removing the property</p>
+<pre><code class="sh">spo storageentity remove -k AnalyticsId --confirm -u https://contoso.sharepoint.com/sites/appcatalog
+</code></pre>
+
+<p>remove the AnalyticsId tenant property. Suppresses the confirmation prompt</p>
+<h2 id="more-information">More information</h2>
+<ul>
+<li>SharePoint Framework Tenant Properties: https://docs.microsoft.com/en-us/sharepoint/dev/spfx/tenant-properties</li>
+</ul>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../storageentity-set/" class="btn btn-neutral float-right" title="storageentity set">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../storageentity-list/" class="btn btn-neutral" title="storageentity list"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+          <a href="http://github.com/SharePoint/office365-cli/" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
+      
+      
+        <span><a href="../storageentity-list/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../storageentity-set/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script>var base_url = '../../..';</script>
+    <script src="../../../js/theme.js"></script>
+      <script src="../../../search/require.js"></script>
+      <script src="../../../search/search.js"></script>
+
+</body>
+</html>

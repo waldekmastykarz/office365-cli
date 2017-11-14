@@ -1,0 +1,539 @@
+{
+    "docs": [
+        {
+            "location": "/", 
+            "text": "Office 365 CLI\n\n\nThe Office 365 CLI allows you to manage different settings of your Microsoft Office 365 tenant on any platform.\n\n\n\n\n\nInstallation\n\n\nThe Office 365 CLI is distributed as an NPM package. To use it, install it globally using:\n\n\nnpm i -g @pnp/office365-cli\n\n\n\n\nor using yarn:\n\n\nyarn global add @pnp/office365-cli\n\n\n\n\nGetting started\n\n\nStart the Office 365 CLI by typing in the command line:\n\n\n$ office365\n\no365$ _\n\n\n\n\nRunning the \noffice365\n command will start the immersive CLI with its own command prompt.\n\n\nStart managing the settings of your Office 365 tenant by connecting to it, using the \nspo connect \nurl\n site, for example:\n\n\no365$ spo connect https://contoso-admin.sharepoint.com\n\n\n\n\n\n\nDepending on which settings you want to manage you might need to connect either to your tenant admin site (URL with \n-admin\n) in it, or to a regular SharePoint site. For more information refer to the help of the command you want to use.\n\n\n\n\nTo list all available commands, type in the Office 365 CLI prompt \nhelp\n:\n\n\no365$ help\n\n\n\n\nTo exit the CLI, type \nexit\n:\n\n\no365$ exit", 
+            "title": "Home"
+        }, 
+        {
+            "location": "/#office-365-cli", 
+            "text": "The Office 365 CLI allows you to manage different settings of your Microsoft Office 365 tenant on any platform.", 
+            "title": "Office 365 CLI"
+        }, 
+        {
+            "location": "/#installation", 
+            "text": "The Office 365 CLI is distributed as an NPM package. To use it, install it globally using:  npm i -g @pnp/office365-cli  or using yarn:  yarn global add @pnp/office365-cli", 
+            "title": "Installation"
+        }, 
+        {
+            "location": "/#getting-started", 
+            "text": "Start the Office 365 CLI by typing in the command line:  $ office365\n\no365$ _  Running the  office365  command will start the immersive CLI with its own command prompt.  Start managing the settings of your Office 365 tenant by connecting to it, using the  spo connect  url  site, for example:  o365$ spo connect https://contoso-admin.sharepoint.com   Depending on which settings you want to manage you might need to connect either to your tenant admin site (URL with  -admin ) in it, or to a regular SharePoint site. For more information refer to the help of the command you want to use.   To list all available commands, type in the Office 365 CLI prompt  help :  o365$ help  To exit the CLI, type  exit :  o365$ exit", 
+            "title": "Getting started"
+        }, 
+        {
+            "location": "/cmd/spo/connect/", 
+            "text": "spo connect\n\n\nConnects to a SharePoint Online site\n\n\nUsage\n\n\nspo connect [options] \nurl\n\n\n\n\n\nOptions\n\n\n\n\n\n\n\n\nOption\n\n\nDescription\n\n\n\n\n\n\n\n\n\n\n--help\n\n\noutput usage information\n\n\n\n\n\n\n--verbose\n\n\nRuns command with verbose logging\n\n\n\n\n\n\n\n\nArguments\n\n\n\n\n\n\n\n\nArgument\n\n\nDescription\n\n\n\n\n\n\n\n\n\n\nurl\n\n\nabsolute URL of the SharePoint Online site to connect to\n\n\n\n\n\n\n\n\nRemarks\n\n\nUsing the \nspo connect\n command, you can connect to any SharePoint Online site.\nDepending on the command you want to use, you might be required to connect\nto a SharePoint Online tenant admin site (suffixed with \n-admin\n,\neg. \nhttps://contoso-admin.sharepoint.com\n) or a regular site.\n\n\nThe \nspo connect\n command uses device code OAuth flow with the standard\nMicrosoft SharePoint Online Management Shell Azure AD application to connect\nto SharePoint Online.\n\n\nWhen connecting to a SharePoint site, the \nspo connect\n command stores in memory\nthe access token and the refresh token for the specified site. Both tokens are cleared from memory\nafter exiting the CLI or by calling the \nspo disconnect\n command.\n\n\nExamples\n\n\nspo connect https://contoso-admin.sharepoint.com\n\n\n\n\nconnects to a SharePoint Online tenant admin site\n\n\nspo connect --verbose https://contoso-admin.sharepoint.com\n\n\n\n\nconnects to a SharePoint Online tenant admin site in verbose mode including detailed debug information in the console output\n\n\nspo connect https://contoso.sharepoint.com/sites/team\n\n\n\n\nconnects to a regular SharePoint Online site", 
+            "title": "connect"
+        }, 
+        {
+            "location": "/cmd/spo/connect/#spo-connect", 
+            "text": "Connects to a SharePoint Online site", 
+            "title": "spo connect"
+        }, 
+        {
+            "location": "/cmd/spo/connect/#usage", 
+            "text": "spo connect [options]  url", 
+            "title": "Usage"
+        }, 
+        {
+            "location": "/cmd/spo/connect/#options", 
+            "text": "Option  Description      --help  output usage information    --verbose  Runs command with verbose logging", 
+            "title": "Options"
+        }, 
+        {
+            "location": "/cmd/spo/connect/#arguments", 
+            "text": "Argument  Description      url  absolute URL of the SharePoint Online site to connect to", 
+            "title": "Arguments"
+        }, 
+        {
+            "location": "/cmd/spo/connect/#remarks", 
+            "text": "Using the  spo connect  command, you can connect to any SharePoint Online site.\nDepending on the command you want to use, you might be required to connect\nto a SharePoint Online tenant admin site (suffixed with  -admin ,\neg.  https://contoso-admin.sharepoint.com ) or a regular site.  The  spo connect  command uses device code OAuth flow with the standard\nMicrosoft SharePoint Online Management Shell Azure AD application to connect\nto SharePoint Online.  When connecting to a SharePoint site, the  spo connect  command stores in memory\nthe access token and the refresh token for the specified site. Both tokens are cleared from memory\nafter exiting the CLI or by calling the  spo disconnect  command.", 
+            "title": "Remarks"
+        }, 
+        {
+            "location": "/cmd/spo/connect/#examples", 
+            "text": "spo connect https://contoso-admin.sharepoint.com  connects to a SharePoint Online tenant admin site  spo connect --verbose https://contoso-admin.sharepoint.com  connects to a SharePoint Online tenant admin site in verbose mode including detailed debug information in the console output  spo connect https://contoso.sharepoint.com/sites/team  connects to a regular SharePoint Online site", 
+            "title": "Examples"
+        }, 
+        {
+            "location": "/cmd/spo/disconnect/", 
+            "text": "spo disconnect\n\n\nDisconnects from a previously connected SharePoint Online site\n\n\nUsage\n\n\nspo disconnect [options]\n\n\n\n\nOptions\n\n\n\n\n\n\n\n\nOption\n\n\nDescription\n\n\n\n\n\n\n\n\n\n\n--help\n\n\noutput usage information\n\n\n\n\n\n\n--verbose\n\n\nRuns command with verbose logging\n\n\n\n\n\n\n\n\nRemarks\n\n\nThe spo disconnect command disconnects from the previously connected SharePoint Online site and removes any access and refresh tokens from memory.\n\n\nExamples\n\n\nspo disconnect\n\n\n\n\ndisconnects from a previously connected SharePoint Online site\n\n\nspo disconnect --verbose\n\n\n\n\ndisconnects from a previously connected SharePoint Online site in verbose mode including detailed debug information in the console output", 
+            "title": "disconnect"
+        }, 
+        {
+            "location": "/cmd/spo/disconnect/#spo-disconnect", 
+            "text": "Disconnects from a previously connected SharePoint Online site", 
+            "title": "spo disconnect"
+        }, 
+        {
+            "location": "/cmd/spo/disconnect/#usage", 
+            "text": "spo disconnect [options]", 
+            "title": "Usage"
+        }, 
+        {
+            "location": "/cmd/spo/disconnect/#options", 
+            "text": "Option  Description      --help  output usage information    --verbose  Runs command with verbose logging", 
+            "title": "Options"
+        }, 
+        {
+            "location": "/cmd/spo/disconnect/#remarks", 
+            "text": "The spo disconnect command disconnects from the previously connected SharePoint Online site and removes any access and refresh tokens from memory.", 
+            "title": "Remarks"
+        }, 
+        {
+            "location": "/cmd/spo/disconnect/#examples", 
+            "text": "spo disconnect  disconnects from a previously connected SharePoint Online site  spo disconnect --verbose  disconnects from a previously connected SharePoint Online site in verbose mode including detailed debug information in the console output", 
+            "title": "Examples"
+        }, 
+        {
+            "location": "/cmd/spo/status/", 
+            "text": "spo status\n\n\nShows SharePoint Online site connection status\n\n\nUsage\n\n\nspo status [options]\n\n\n\n\nOptions\n\n\n\n\n\n\n\n\nOption\n\n\nDescription\n\n\n\n\n\n\n\n\n\n\n--help\n\n\noutput usage information\n\n\n\n\n\n\n--verbose\n\n\nRuns command with verbose logging\n\n\n\n\n\n\n\n\nRemarks\n\n\nIf you are connected to a SharePoint Online, the spo status command\nwill show you information about the site to which you are connected, the currently stored\nrefresh and access token and the expiration date and time of the access token.\n\n\nExamples\n\n\nspo status\n\n\n\n\nshows the information about the current connection to SharePoint Online", 
+            "title": "status"
+        }, 
+        {
+            "location": "/cmd/spo/status/#spo-status", 
+            "text": "Shows SharePoint Online site connection status", 
+            "title": "spo status"
+        }, 
+        {
+            "location": "/cmd/spo/status/#usage", 
+            "text": "spo status [options]", 
+            "title": "Usage"
+        }, 
+        {
+            "location": "/cmd/spo/status/#options", 
+            "text": "Option  Description      --help  output usage information    --verbose  Runs command with verbose logging", 
+            "title": "Options"
+        }, 
+        {
+            "location": "/cmd/spo/status/#remarks", 
+            "text": "If you are connected to a SharePoint Online, the spo status command\nwill show you information about the site to which you are connected, the currently stored\nrefresh and access token and the expiration date and time of the access token.", 
+            "title": "Remarks"
+        }, 
+        {
+            "location": "/cmd/spo/status/#examples", 
+            "text": "spo status  shows the information about the current connection to SharePoint Online", 
+            "title": "Examples"
+        }, 
+        {
+            "location": "/cmd/spo/storageentity-get/", 
+            "text": "spo storageentity get\n\n\nGet details for the specified tenant property\n\n\nUsage\n\n\nspo storageentity get [options]\n\n\n\n\nOptions\n\n\n\n\n\n\n\n\nOption\n\n\nDescription\n\n\n\n\n\n\n\n\n\n\n--help\n\n\noutput usage information\n\n\n\n\n\n\n-k, --key \nkey\n\n\nName of the tenant property to retrieve\n\n\n\n\n\n\n--verbose\n\n\nRuns command with verbose logging\n\n\n\n\n\n\n\n\n\n\nImportant:\n before using this command, connect to a SharePoint Online site, using the \nspo connect\n command.\n\n\n\n\nRemarks\n\n\nTo get details of a tenant property, you have to first connect to a SharePoint site using the\n\nspo connect\n command, eg. \nspo connect https://contoso.sharepoint.com\n.\n\n\nTenant properties are stored in the app catalog site associated with the site to which you are currently connected. When retrieving the specified tenant property, SharePoint will automatically find the associated app catalog and try to retrieve the property from it.\n\n\nExamples\n\n\nspo storageentity get -k AnalyticsId\n\n\n\n\nshow the value, description and comment of the \nAnalyticsId\n tenant property\n\n\nMore information\n\n\n\n\nSharePoint Framework Tenant Properties: https://docs.microsoft.com/en-us/sharepoint/dev/spfx/tenant-properties", 
+            "title": "storageentity get"
+        }, 
+        {
+            "location": "/cmd/spo/storageentity-get/#spo-storageentity-get", 
+            "text": "Get details for the specified tenant property", 
+            "title": "spo storageentity get"
+        }, 
+        {
+            "location": "/cmd/spo/storageentity-get/#usage", 
+            "text": "spo storageentity get [options]", 
+            "title": "Usage"
+        }, 
+        {
+            "location": "/cmd/spo/storageentity-get/#options", 
+            "text": "Option  Description      --help  output usage information    -k, --key  key  Name of the tenant property to retrieve    --verbose  Runs command with verbose logging      Important:  before using this command, connect to a SharePoint Online site, using the  spo connect  command.", 
+            "title": "Options"
+        }, 
+        {
+            "location": "/cmd/spo/storageentity-get/#remarks", 
+            "text": "To get details of a tenant property, you have to first connect to a SharePoint site using the spo connect  command, eg.  spo connect https://contoso.sharepoint.com .  Tenant properties are stored in the app catalog site associated with the site to which you are currently connected. When retrieving the specified tenant property, SharePoint will automatically find the associated app catalog and try to retrieve the property from it.", 
+            "title": "Remarks"
+        }, 
+        {
+            "location": "/cmd/spo/storageentity-get/#examples", 
+            "text": "spo storageentity get -k AnalyticsId  show the value, description and comment of the  AnalyticsId  tenant property", 
+            "title": "Examples"
+        }, 
+        {
+            "location": "/cmd/spo/storageentity-get/#more-information", 
+            "text": "SharePoint Framework Tenant Properties: https://docs.microsoft.com/en-us/sharepoint/dev/spfx/tenant-properties", 
+            "title": "More information"
+        }, 
+        {
+            "location": "/cmd/spo/storageentity-list/", 
+            "text": "spo storageentity list\n\n\nLists tenant properties stored on the specified SharePoint Online app catalog\n\n\nUsage\n\n\nspo storageentity list [options]\n\n\n\n\nOptions\n\n\n\n\n\n\n\n\nOption\n\n\nDescription\n\n\n\n\n\n\n\n\n\n\n--help\n\n\noutput usage information\n\n\n\n\n\n\n-u, --appCatalogUrl \nappCatalogUrl\n\n\nURL of the app catalog site\n\n\n\n\n\n\n--verbose\n\n\nRuns command with verbose logging\n\n\n\n\n\n\n\n\n\n\nImportant:\n before using this command, connect to a SharePoint Online site, using the \nspo connect\n command.\n\n\n\n\nRemarks\n\n\nTo list tenant properties, you have to first connect to a SharePoint site using the\n\nspo connect\n command, eg. \nspo connect https://contoso.sharepoint.com\n.\n\n\nTenant properties are stored in the app catalog site. To list all tenant properties, you have to specify the absolute URL of the app catalog site. If you specify an incorrect URL, or the site at the given URL is not an app catalog site, no properties will be retrieved.\n\n\nExamples\n\n\nspo storageentity list -u https://contoso.sharepoint.com/sites/appcatalog\n\n\n\n\nlist all tenant properties stored in the https://contoso.sharepoint.com/sites/appcatalog app catalog site\n\n\nMore information\n\n\n\n\nSharePoint Framework Tenant Properties: https://docs.microsoft.com/en-us/sharepoint/dev/spfx/tenant-properties", 
+            "title": "storageentity list"
+        }, 
+        {
+            "location": "/cmd/spo/storageentity-list/#spo-storageentity-list", 
+            "text": "Lists tenant properties stored on the specified SharePoint Online app catalog", 
+            "title": "spo storageentity list"
+        }, 
+        {
+            "location": "/cmd/spo/storageentity-list/#usage", 
+            "text": "spo storageentity list [options]", 
+            "title": "Usage"
+        }, 
+        {
+            "location": "/cmd/spo/storageentity-list/#options", 
+            "text": "Option  Description      --help  output usage information    -u, --appCatalogUrl  appCatalogUrl  URL of the app catalog site    --verbose  Runs command with verbose logging      Important:  before using this command, connect to a SharePoint Online site, using the  spo connect  command.", 
+            "title": "Options"
+        }, 
+        {
+            "location": "/cmd/spo/storageentity-list/#remarks", 
+            "text": "To list tenant properties, you have to first connect to a SharePoint site using the spo connect  command, eg.  spo connect https://contoso.sharepoint.com .  Tenant properties are stored in the app catalog site. To list all tenant properties, you have to specify the absolute URL of the app catalog site. If you specify an incorrect URL, or the site at the given URL is not an app catalog site, no properties will be retrieved.", 
+            "title": "Remarks"
+        }, 
+        {
+            "location": "/cmd/spo/storageentity-list/#examples", 
+            "text": "spo storageentity list -u https://contoso.sharepoint.com/sites/appcatalog  list all tenant properties stored in the https://contoso.sharepoint.com/sites/appcatalog app catalog site", 
+            "title": "Examples"
+        }, 
+        {
+            "location": "/cmd/spo/storageentity-list/#more-information", 
+            "text": "SharePoint Framework Tenant Properties: https://docs.microsoft.com/en-us/sharepoint/dev/spfx/tenant-properties", 
+            "title": "More information"
+        }, 
+        {
+            "location": "/cmd/spo/storageentity-remove/", 
+            "text": "spo storageentity remove\n\n\nRemoves tenant property stored on the specified SharePoint Online app catalog\n\n\nUsage\n\n\nspo storageentity remove [options]\n\n\n\n\nOptions\n\n\n\n\n\n\n\n\nOption\n\n\nDescription\n\n\n\n\n\n\n\n\n\n\n--help\n\n\noutput usage information\n\n\n\n\n\n\n-u, --appCatalogUrl \nappCatalogUrl\n\n\nURL of the app catalog site\n\n\n\n\n\n\n-k, --key \nkey\n\n\nName of the tenant property to retrieve\n\n\n\n\n\n\n--confirm\n\n\nDon't prompt for confirming removal of a tenant property\n\n\n\n\n\n\n--verbose\n\n\nRuns command with verbose logging\n\n\n\n\n\n\n\n\n\n\nImportant:\n before using this command, connect to a SharePoint Online tenant admin site, using the \nspo connect\n command.\n\n\n\n\nRemarks\n\n\nTo remove a tenant property, you have to first connect to a tenant admin site using the\n\nspo connect\n command, eg. \nspo connect https://contoso-admin.sharepoint.com\n.\nIf you are connected to a different site and will try to manage tenant properties,\nyou will get an error.\n\n\nTenant properties are stored in the app catalog site associated with that tenant.\nTo remove a property, you have to specify the absolute URL of the app catalog site.\nIf you specify the URL of a site different than the app catalog, you will get an access denied error.\n\n\nExamples\n\n\nspo storageentity remove -k AnalyticsId -u https://contoso.sharepoint.com/sites/appcatalog\n\n\n\n\nremove the AnalyticsId tenant property. Yields a confirmation prompt before actually\nremoving the property\n\n\nspo storageentity remove -k AnalyticsId --confirm -u https://contoso.sharepoint.com/sites/appcatalog\n\n\n\n\nremove the AnalyticsId tenant property. Suppresses the confirmation prompt\n\n\nMore information\n\n\n\n\nSharePoint Framework Tenant Properties: https://docs.microsoft.com/en-us/sharepoint/dev/spfx/tenant-properties", 
+            "title": "storageentity remove"
+        }, 
+        {
+            "location": "/cmd/spo/storageentity-remove/#spo-storageentity-remove", 
+            "text": "Removes tenant property stored on the specified SharePoint Online app catalog", 
+            "title": "spo storageentity remove"
+        }, 
+        {
+            "location": "/cmd/spo/storageentity-remove/#usage", 
+            "text": "spo storageentity remove [options]", 
+            "title": "Usage"
+        }, 
+        {
+            "location": "/cmd/spo/storageentity-remove/#options", 
+            "text": "Option  Description      --help  output usage information    -u, --appCatalogUrl  appCatalogUrl  URL of the app catalog site    -k, --key  key  Name of the tenant property to retrieve    --confirm  Don't prompt for confirming removal of a tenant property    --verbose  Runs command with verbose logging      Important:  before using this command, connect to a SharePoint Online tenant admin site, using the  spo connect  command.", 
+            "title": "Options"
+        }, 
+        {
+            "location": "/cmd/spo/storageentity-remove/#remarks", 
+            "text": "To remove a tenant property, you have to first connect to a tenant admin site using the spo connect  command, eg.  spo connect https://contoso-admin.sharepoint.com .\nIf you are connected to a different site and will try to manage tenant properties,\nyou will get an error.  Tenant properties are stored in the app catalog site associated with that tenant.\nTo remove a property, you have to specify the absolute URL of the app catalog site.\nIf you specify the URL of a site different than the app catalog, you will get an access denied error.", 
+            "title": "Remarks"
+        }, 
+        {
+            "location": "/cmd/spo/storageentity-remove/#examples", 
+            "text": "spo storageentity remove -k AnalyticsId -u https://contoso.sharepoint.com/sites/appcatalog  remove the AnalyticsId tenant property. Yields a confirmation prompt before actually\nremoving the property  spo storageentity remove -k AnalyticsId --confirm -u https://contoso.sharepoint.com/sites/appcatalog  remove the AnalyticsId tenant property. Suppresses the confirmation prompt", 
+            "title": "Examples"
+        }, 
+        {
+            "location": "/cmd/spo/storageentity-remove/#more-information", 
+            "text": "SharePoint Framework Tenant Properties: https://docs.microsoft.com/en-us/sharepoint/dev/spfx/tenant-properties", 
+            "title": "More information"
+        }, 
+        {
+            "location": "/cmd/spo/storageentity-set/", 
+            "text": "spo storageentity set\n\n\nSets tenant property on the specified SharePoint Online app catalog\n\n\nUsage\n\n\nspo storageentity set [options]\n\n\n\n\nOptions\n\n\n\n\n\n\n\n\nOption\n\n\nDescription\n\n\n\n\n\n\n\n\n\n\n--help\n\n\noutput usage information\n\n\n\n\n\n\n-u, --appCatalogUrl \nappCatalogUrl\n\n\nURL of the app catalog site\n\n\n\n\n\n\n-k, --key \nkey\n\n\nName of the tenant property to retrieve\n\n\n\n\n\n\n-v, --value \nvalue\n\n\nValue to set for the property\n\n\n\n\n\n\n-d, --description [description]\n\n\nDescription to set for the property (optional)\n\n\n\n\n\n\n-c, --comment [comment]\n\n\nComment to set for the property (optional)\n\n\n\n\n\n\n--verbose\n\n\nRuns command with verbose logging\n\n\n\n\n\n\n\n\n\n\nImportant:\n before using this command, connect to a SharePoint Online tenant admin site, using the \nspo connect\n command.\n\n\n\n\nRemarks\n\n\nTo set a tenant property, you have to first connect to a tenant admin site using the\n\nspo connect\n command, eg. \nspo connect https://contoso-admin.sharepoint.com\n.\nIf you are connected to a different site and will try to manage tenant properties,\nyou will get an error.\n\n\nTenant properties are stored in the app catalog site associated with that tenant.\nTo set a property, you have to specify the absolute URL of the app catalog site.\nIf you specify the URL of a site different than the app catalog, you will get an access denied error.\n\n\nExamples\n\n\nspo storageentity set -k AnalyticsId -v 123 -d 'Web analytics ID' -c 'Use on all sites' -u https://contoso.sharepoint.com/sites/appcatalog\n\n\n\n\nset \n123\n as the value of the \nAnalyticsId\n tenant property. Also include a description and a comment for additional clarification of the usage of the property.\n\n\nMore information\n\n\n\n\nSharePoint Framework Tenant Properties: https://docs.microsoft.com/en-us/sharepoint/dev/spfx/tenant-properties", 
+            "title": "storageentity set"
+        }, 
+        {
+            "location": "/cmd/spo/storageentity-set/#spo-storageentity-set", 
+            "text": "Sets tenant property on the specified SharePoint Online app catalog", 
+            "title": "spo storageentity set"
+        }, 
+        {
+            "location": "/cmd/spo/storageentity-set/#usage", 
+            "text": "spo storageentity set [options]", 
+            "title": "Usage"
+        }, 
+        {
+            "location": "/cmd/spo/storageentity-set/#options", 
+            "text": "Option  Description      --help  output usage information    -u, --appCatalogUrl  appCatalogUrl  URL of the app catalog site    -k, --key  key  Name of the tenant property to retrieve    -v, --value  value  Value to set for the property    -d, --description [description]  Description to set for the property (optional)    -c, --comment [comment]  Comment to set for the property (optional)    --verbose  Runs command with verbose logging      Important:  before using this command, connect to a SharePoint Online tenant admin site, using the  spo connect  command.", 
+            "title": "Options"
+        }, 
+        {
+            "location": "/cmd/spo/storageentity-set/#remarks", 
+            "text": "To set a tenant property, you have to first connect to a tenant admin site using the spo connect  command, eg.  spo connect https://contoso-admin.sharepoint.com .\nIf you are connected to a different site and will try to manage tenant properties,\nyou will get an error.  Tenant properties are stored in the app catalog site associated with that tenant.\nTo set a property, you have to specify the absolute URL of the app catalog site.\nIf you specify the URL of a site different than the app catalog, you will get an access denied error.", 
+            "title": "Remarks"
+        }, 
+        {
+            "location": "/cmd/spo/storageentity-set/#examples", 
+            "text": "spo storageentity set -k AnalyticsId -v 123 -d 'Web analytics ID' -c 'Use on all sites' -u https://contoso.sharepoint.com/sites/appcatalog  set  123  as the value of the  AnalyticsId  tenant property. Also include a description and a comment for additional clarification of the usage of the property.", 
+            "title": "Examples"
+        }, 
+        {
+            "location": "/cmd/spo/storageentity-set/#more-information", 
+            "text": "SharePoint Framework Tenant Properties: https://docs.microsoft.com/en-us/sharepoint/dev/spfx/tenant-properties", 
+            "title": "More information"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-get/", 
+            "text": "spo tenant cdn get\n\n\nView current status of the specified Office 365 CDN\n\n\nUsage\n\n\nspo tenant cdn get [options]\n\n\n\n\nOptions\n\n\n\n\n\n\n\n\nOption\n\n\nDescription\n\n\n\n\n\n\n\n\n\n\n--help\n\n\noutput usage information\n\n\n\n\n\n\n-t, --type [type]\n\n\nType of CDN to manage. \nPublic|Private\n. Default \nPublic\n\n\n\n\n\n\n--verbose\n\n\nRuns command with verbose logging\n\n\n\n\n\n\n\n\n\n\nImportant:\n before using this command, connect to a SharePoint Online tenant admin site, using the \nspo connect\n command.\n\n\n\n\nRemarks\n\n\nTo view the status of an Office 365 CDN, you have to first connect to a tenant admin site using the\n\nspo connect\n command, eg. \nspo connect https://contoso-admin.sharepoint.com\n.\nIf you are connected to a different site and will try to manage tenant properties,\nyou will get an error.\n\n\nUsing the \n-t, --type\n option you can choose whether you want to manage the settings of\nthe Public (default) or Private CDN. If you don't use the option, the command will use the Public CDN.\n\n\nExamples\n\n\nspo tenant cdn get\n\n\n\n\nshows if the Public CDN is currently enabled or not\n\n\nspo tenant cdn get -t Private\n\n\n\n\nshows if the Private CDN is currently enabled or not\n\n\nMore information\n\n\n\n\nGeneral availability of Office 365 CDN: https://dev.office.com/blogs/general-availability-of-office-365-cdn", 
+            "title": "tenant cdn get"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-get/#spo-tenant-cdn-get", 
+            "text": "View current status of the specified Office 365 CDN", 
+            "title": "spo tenant cdn get"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-get/#usage", 
+            "text": "spo tenant cdn get [options]", 
+            "title": "Usage"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-get/#options", 
+            "text": "Option  Description      --help  output usage information    -t, --type [type]  Type of CDN to manage.  Public|Private . Default  Public    --verbose  Runs command with verbose logging      Important:  before using this command, connect to a SharePoint Online tenant admin site, using the  spo connect  command.", 
+            "title": "Options"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-get/#remarks", 
+            "text": "To view the status of an Office 365 CDN, you have to first connect to a tenant admin site using the spo connect  command, eg.  spo connect https://contoso-admin.sharepoint.com .\nIf you are connected to a different site and will try to manage tenant properties,\nyou will get an error.  Using the  -t, --type  option you can choose whether you want to manage the settings of\nthe Public (default) or Private CDN. If you don't use the option, the command will use the Public CDN.", 
+            "title": "Remarks"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-get/#examples", 
+            "text": "spo tenant cdn get  shows if the Public CDN is currently enabled or not  spo tenant cdn get -t Private  shows if the Private CDN is currently enabled or not", 
+            "title": "Examples"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-get/#more-information", 
+            "text": "General availability of Office 365 CDN: https://dev.office.com/blogs/general-availability-of-office-365-cdn", 
+            "title": "More information"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-origin-list/", 
+            "text": "spo tenant cdn origin list\n\n\nList CDN origins settings for the current SharePoint Online tenant\n\n\nUsage\n\n\nspo tenant cdn origin list [options]\n\n\n\n\nOptions\n\n\n\n\n\n\n\n\nOption\n\n\nDescription\n\n\n\n\n\n\n\n\n\n\n--help\n\n\noutput usage information\n\n\n\n\n\n\n-t, --type [type]\n\n\nType of CDN to manage. \nPublic|Private\n. Default \nPublic\n\n\n\n\n\n\n--verbose\n\n\nRuns command with verbose logging\n\n\n\n\n\n\n\n\n\n\nImportant:\n before using this command, connect to a SharePoint Online tenant admin site, using the \nspo connect\n command.\n\n\n\n\nRemarks\n\n\nTo list origins of a Office 365 CDN, you have to first connect to a tenant admin site using the\n\nspo connect\n command, eg. \nspo connect https://contoso-admin.sharepoint.com\n.\nIf you are connected to a different site and will try to manage tenant properties,\nyou will get an error.\n\n\nUsing the \n-t, --type\n option you can choose whether you want to manage the settings of\nthe Public (default) or Private CDN. If you don't use the option, the command will use the Public CDN.\n\n\nExamples\n\n\nspo tenant cdn origin list\n\n\n\n\nshows the list of origins configured for the Public CDN\n\n\nspo tenant cdn origin list -t Private\n\n\n\n\nshows the list of origins configured for the Private CDN\n\n\nMore information\n\n\n\n\nGeneral availability of Office 365 CDN: https://dev.office.com/blogs/general-availability-of-office-365-cdn", 
+            "title": "tenant cdn origin list"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-origin-list/#spo-tenant-cdn-origin-list", 
+            "text": "List CDN origins settings for the current SharePoint Online tenant", 
+            "title": "spo tenant cdn origin list"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-origin-list/#usage", 
+            "text": "spo tenant cdn origin list [options]", 
+            "title": "Usage"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-origin-list/#options", 
+            "text": "Option  Description      --help  output usage information    -t, --type [type]  Type of CDN to manage.  Public|Private . Default  Public    --verbose  Runs command with verbose logging      Important:  before using this command, connect to a SharePoint Online tenant admin site, using the  spo connect  command.", 
+            "title": "Options"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-origin-list/#remarks", 
+            "text": "To list origins of a Office 365 CDN, you have to first connect to a tenant admin site using the spo connect  command, eg.  spo connect https://contoso-admin.sharepoint.com .\nIf you are connected to a different site and will try to manage tenant properties,\nyou will get an error.  Using the  -t, --type  option you can choose whether you want to manage the settings of\nthe Public (default) or Private CDN. If you don't use the option, the command will use the Public CDN.", 
+            "title": "Remarks"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-origin-list/#examples", 
+            "text": "spo tenant cdn origin list  shows the list of origins configured for the Public CDN  spo tenant cdn origin list -t Private  shows the list of origins configured for the Private CDN", 
+            "title": "Examples"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-origin-list/#more-information", 
+            "text": "General availability of Office 365 CDN: https://dev.office.com/blogs/general-availability-of-office-365-cdn", 
+            "title": "More information"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-origin-remove/", 
+            "text": "spo tenant cdn origin remove\n\n\nRemoves CDN origin for the current SharePoint Online tenant\n\n\nUsage\n\n\nspo tenant cdn origin remove [options]\n\n\n\n\nOptions\n\n\n\n\n\n\n\n\nOption\n\n\nDescription\n\n\n\n\n\n\n\n\n\n\n--help\n\n\noutput usage information\n\n\n\n\n\n\n-t, --type [type]\n\n\nType of CDN to manage. \nPublic|Private\n. Default \nPublic\n\n\n\n\n\n\n-o, --origin \norigin\n\n\nOrigin to remove from the current CDN configuration\n\n\n\n\n\n\n--confirm\n\n\nDon't prompt for confirming removal of a tenant property\n\n\n\n\n\n\n--verbose\n\n\nRuns command with verbose logging\n\n\n\n\n\n\n\n\n\n\nImportant:\n before using this command, connect to a SharePoint Online tenant admin site, using the \nspo connect\n command.\n\n\n\n\nRemarks\n\n\nTo remove an origin from an Office 365 CDN, you have to first connect to a tenant admin site using the\n\nspo connect\n command, eg. \nspo connect https://contoso-admin.sharepoint.com\n.\nIf you are connected to a different site and will try to manage tenant properties,\nyou will get an error.\n\n\nUsing the \n-t, --type\n option you can choose whether you want to manage the settings of\nthe Public (default) or Private CDN. If you don't use the option, the command will use the Public CDN.\n\n\nExamples\n\n\nspo tenant cdn origin remove -t Public -o */CDN\n\n\n\n\nremoves */CDN from the list of origins of the Public CDN\n\n\nMore information\n\n\n\n\nGeneral availability of Office 365 CDN: https://dev.office.com/blogs/general-availability-of-office-365-cdn", 
+            "title": "tenant cdn origin remove"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-origin-remove/#spo-tenant-cdn-origin-remove", 
+            "text": "Removes CDN origin for the current SharePoint Online tenant", 
+            "title": "spo tenant cdn origin remove"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-origin-remove/#usage", 
+            "text": "spo tenant cdn origin remove [options]", 
+            "title": "Usage"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-origin-remove/#options", 
+            "text": "Option  Description      --help  output usage information    -t, --type [type]  Type of CDN to manage.  Public|Private . Default  Public    -o, --origin  origin  Origin to remove from the current CDN configuration    --confirm  Don't prompt for confirming removal of a tenant property    --verbose  Runs command with verbose logging      Important:  before using this command, connect to a SharePoint Online tenant admin site, using the  spo connect  command.", 
+            "title": "Options"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-origin-remove/#remarks", 
+            "text": "To remove an origin from an Office 365 CDN, you have to first connect to a tenant admin site using the spo connect  command, eg.  spo connect https://contoso-admin.sharepoint.com .\nIf you are connected to a different site and will try to manage tenant properties,\nyou will get an error.  Using the  -t, --type  option you can choose whether you want to manage the settings of\nthe Public (default) or Private CDN. If you don't use the option, the command will use the Public CDN.", 
+            "title": "Remarks"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-origin-remove/#examples", 
+            "text": "spo tenant cdn origin remove -t Public -o */CDN  removes */CDN from the list of origins of the Public CDN", 
+            "title": "Examples"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-origin-remove/#more-information", 
+            "text": "General availability of Office 365 CDN: https://dev.office.com/blogs/general-availability-of-office-365-cdn", 
+            "title": "More information"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-origin-set/", 
+            "text": "spo tenant cdn origin set\n\n\nAdds CDN origin to the current SharePoint Online tenant\n\n\nUsage\n\n\nspo tenant cdn origin set [options]\n\n\n\n\nOptions\n\n\n\n\n\n\n\n\nOption\n\n\nDescription\n\n\n\n\n\n\n\n\n\n\n--help\n\n\noutput usage information\n\n\n\n\n\n\n-t, --type [type]\n\n\nType of CDN to manage. \nPublic|Private\n. Default \nPublic\n\n\n\n\n\n\n-o, --origin \norigin\n\n\nOrigin to add to the current CDN configuration\n\n\n\n\n\n\n--verbose\n\n\nRuns command with verbose logging\n\n\n\n\n\n\n\n\n\n\nImportant:\n before using this command, connect to a SharePoint Online tenant admin site, using the \nspo connect\n command.\n\n\n\n\nRemarks\n\n\nTo add origins to an Office 365 CDN, you have to first connect to a tenant admin site using the\n\nspo connect\n command, eg. \nspo connect https://contoso-admin.sharepoint.com\n.\nIf you are connected to a different site and will try to manage tenant properties,\nyou will get an error.\n\n\nUsing the \n-t, --type\n option you can choose whether you want to manage the settings of\nthe Public (default) or Private CDN. If you don't use the option, the command will use the Public CDN.\n\n\nExamples\n\n\nspo tenant cdn origin set -t Public -o */CDN\n\n\n\n\nadds */CDN to the list of origins of the Public CDN\n\n\nMore information\n\n\n\n\nGeneral availability of Office 365 CDN: https://dev.office.com/blogs/general-availability-of-office-365-cdn", 
+            "title": "tenant cdn origin set"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-origin-set/#spo-tenant-cdn-origin-set", 
+            "text": "Adds CDN origin to the current SharePoint Online tenant", 
+            "title": "spo tenant cdn origin set"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-origin-set/#usage", 
+            "text": "spo tenant cdn origin set [options]", 
+            "title": "Usage"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-origin-set/#options", 
+            "text": "Option  Description      --help  output usage information    -t, --type [type]  Type of CDN to manage.  Public|Private . Default  Public    -o, --origin  origin  Origin to add to the current CDN configuration    --verbose  Runs command with verbose logging      Important:  before using this command, connect to a SharePoint Online tenant admin site, using the  spo connect  command.", 
+            "title": "Options"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-origin-set/#remarks", 
+            "text": "To add origins to an Office 365 CDN, you have to first connect to a tenant admin site using the spo connect  command, eg.  spo connect https://contoso-admin.sharepoint.com .\nIf you are connected to a different site and will try to manage tenant properties,\nyou will get an error.  Using the  -t, --type  option you can choose whether you want to manage the settings of\nthe Public (default) or Private CDN. If you don't use the option, the command will use the Public CDN.", 
+            "title": "Remarks"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-origin-set/#examples", 
+            "text": "spo tenant cdn origin set -t Public -o */CDN  adds */CDN to the list of origins of the Public CDN", 
+            "title": "Examples"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-origin-set/#more-information", 
+            "text": "General availability of Office 365 CDN: https://dev.office.com/blogs/general-availability-of-office-365-cdn", 
+            "title": "More information"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-policy-list/", 
+            "text": "spo tenant cdn policy list\n\n\nLists CDN policies settings for the current SharePoint Online tenant\n\n\nUsage\n\n\nspo tenant cdn policy list [options]\n\n\n\n\nOptions\n\n\n\n\n\n\n\n\nOption\n\n\nDescription\n\n\n\n\n\n\n\n\n\n\n--help\n\n\noutput usage information\n\n\n\n\n\n\n-t, --type [type]\n\n\nType of CDN to manage. \nPublic|Private\n. Default \nPublic\n\n\n\n\n\n\n--verbose\n\n\nRuns command with verbose logging\n\n\n\n\n\n\n\n\n\n\nImportant:\n before using this command, connect to a SharePoint Online tenant admin site, using the \nspo connect\n command.\n\n\n\n\nRemarks\n\n\nTo list the policies of an Office 365 CDN, you have to first connect to a tenant admin site using the\n\nspo connect\n command, eg. \nspo connect https://contoso-admin.sharepoint.com\n.\nIf you are connected to a different site and will try to manage tenant properties,\nyou will get an error.\n\n\nUsing the \n-t, --type\n option you can choose whether you want to manage the settings of\nthe Public (default) or Private CDN. If you don't use the option, the command will use the Public CDN.\n\n\nExamples\n\n\nspo tenant cdn policy list\n\n\n\n\nshows the list of policies configured for the Public CDN\n\n\nspo tenant cdn policy list -t Private\n\n\n\n\nshows the list of policies configured for the Private CDN\n\n\nMore information\n\n\n\n\nGeneral availability of Office 365 CDN: https://dev.office.com/blogs/general-availability-of-office-365-cdn", 
+            "title": "tenant cdn policy list"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-policy-list/#spo-tenant-cdn-policy-list", 
+            "text": "Lists CDN policies settings for the current SharePoint Online tenant", 
+            "title": "spo tenant cdn policy list"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-policy-list/#usage", 
+            "text": "spo tenant cdn policy list [options]", 
+            "title": "Usage"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-policy-list/#options", 
+            "text": "Option  Description      --help  output usage information    -t, --type [type]  Type of CDN to manage.  Public|Private . Default  Public    --verbose  Runs command with verbose logging      Important:  before using this command, connect to a SharePoint Online tenant admin site, using the  spo connect  command.", 
+            "title": "Options"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-policy-list/#remarks", 
+            "text": "To list the policies of an Office 365 CDN, you have to first connect to a tenant admin site using the spo connect  command, eg.  spo connect https://contoso-admin.sharepoint.com .\nIf you are connected to a different site and will try to manage tenant properties,\nyou will get an error.  Using the  -t, --type  option you can choose whether you want to manage the settings of\nthe Public (default) or Private CDN. If you don't use the option, the command will use the Public CDN.", 
+            "title": "Remarks"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-policy-list/#examples", 
+            "text": "spo tenant cdn policy list  shows the list of policies configured for the Public CDN  spo tenant cdn policy list -t Private  shows the list of policies configured for the Private CDN", 
+            "title": "Examples"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-policy-list/#more-information", 
+            "text": "General availability of Office 365 CDN: https://dev.office.com/blogs/general-availability-of-office-365-cdn", 
+            "title": "More information"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-policy-set/", 
+            "text": "spo tenant cdn policy set\n\n\nSets CDN policy value for the current SharePoint Online tenant\n\n\nUsage\n\n\nspo tenant cdn policy set [options]\n\n\n\n\nOptions\n\n\n\n\n\n\n\n\nOption\n\n\nDescription\n\n\n\n\n\n\n\n\n\n\n--help\n\n\noutput usage information\n\n\n\n\n\n\n-t, --type [type]\n\n\nType of CDN to manage. \nPublic|Private\n. Default \nPublic\n\n\n\n\n\n\n-p, --policy \npolicy\n\n\nCDN policy to configure. \nIncludeFileExtensions|ExcludeRestrictedSiteClassifications\n\n\n\n\n\n\n-v, --value \nvalue\n\n\nValue for the policy to configure\n\n\n\n\n\n\n--verbose\n\n\nRuns command with verbose logging\n\n\n\n\n\n\n\n\n\n\nImportant:\n before using this command, connect to a SharePoint Online tenant admin site, using the \nspo connect\n command.\n\n\n\n\nRemarks\n\n\nTo set the policy of an Office 365 CDN, you have to first connect to a tenant admin site using the\n\nspo connect\n command, eg. \nspo connect https://contoso-admin.sharepoint.com\n.\nIf you are connected to a different site and will try to manage tenant properties,\nyou will get an error.\n\n\nUsing the \n-t, --type\n option you can choose whether you want to manage the settings of\nthe Public (default) or Private CDN. If you don't use the option, the command will use the Public CDN.\n\n\nExamples\n\n\nspo tenant cdn policy set -t Public -p IncludeFileExtensions -v CSS,EOT,GIF,ICO,JPEG,JPG,JS,MAP,PNG,SVG,TTF,WOFF,JSON\n\n\n\n\nsets the list of extensions supported by the Public CDN\n\n\nMore information\n\n\n\n\nGeneral availability of Office 365 CDN: https://dev.office.com/blogs/general-availability-of-office-365-cdn", 
+            "title": "tenant cdn policy set"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-policy-set/#spo-tenant-cdn-policy-set", 
+            "text": "Sets CDN policy value for the current SharePoint Online tenant", 
+            "title": "spo tenant cdn policy set"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-policy-set/#usage", 
+            "text": "spo tenant cdn policy set [options]", 
+            "title": "Usage"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-policy-set/#options", 
+            "text": "Option  Description      --help  output usage information    -t, --type [type]  Type of CDN to manage.  Public|Private . Default  Public    -p, --policy  policy  CDN policy to configure.  IncludeFileExtensions|ExcludeRestrictedSiteClassifications    -v, --value  value  Value for the policy to configure    --verbose  Runs command with verbose logging      Important:  before using this command, connect to a SharePoint Online tenant admin site, using the  spo connect  command.", 
+            "title": "Options"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-policy-set/#remarks", 
+            "text": "To set the policy of an Office 365 CDN, you have to first connect to a tenant admin site using the spo connect  command, eg.  spo connect https://contoso-admin.sharepoint.com .\nIf you are connected to a different site and will try to manage tenant properties,\nyou will get an error.  Using the  -t, --type  option you can choose whether you want to manage the settings of\nthe Public (default) or Private CDN. If you don't use the option, the command will use the Public CDN.", 
+            "title": "Remarks"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-policy-set/#examples", 
+            "text": "spo tenant cdn policy set -t Public -p IncludeFileExtensions -v CSS,EOT,GIF,ICO,JPEG,JPG,JS,MAP,PNG,SVG,TTF,WOFF,JSON  sets the list of extensions supported by the Public CDN", 
+            "title": "Examples"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-policy-set/#more-information", 
+            "text": "General availability of Office 365 CDN: https://dev.office.com/blogs/general-availability-of-office-365-cdn", 
+            "title": "More information"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-set/", 
+            "text": "spo tenant cdn set\n\n\nEnable or disable the specified Office 365 CDN\n\n\nUsage\n\n\nspo tenant cdn set [options]\n\n\n\n\nOptions\n\n\n\n\n\n\n\n\nOption\n\n\nDescription\n\n\n\n\n\n\n\n\n\n\n--help\n\n\noutput usage information\n\n\n\n\n\n\n-e, --enabled \nenabled\n\n\nSet to true to enable CDN or to false to disable it. Valid values are true\n\n\n\n\n\n\n-t, --type [type]\n\n\nType of CDN to manage. \nPublic|Private\n. Default \nPublic\n\n\n\n\n\n\n--verbose\n\n\nRuns command with verbose logging\n\n\n\n\n\n\n\n\n\n\nImportant:\n before using this command, connect to a SharePoint Online tenant admin site, using the \nspo connect\n command.\n\n\n\n\nRemarks\n\n\nTo enable or disable an Office 365 CDN, you have to first connect to a tenant admin site using the\n\nspo connect\n command, eg. \nspo connect https://contoso-admin.sharepoint.com\n.\nIf you are connected to a different site and will try to manage tenant properties,\nyou will get an error.\n\n\nUsing the \n-t, --type\n option you can choose whether you want to manage the settings of\nthe Public (default) or Private CDN. If you don't use the option, the command will use the Public CDN.\n\n\nUsing the \n-e, --enabled\n option you can specify whether the given CDN type should be\nenabled or disabled. Use true to enable the specified CDN and false to\ndisable it.\n\n\nExamples\n\n\nspo tenant cdn set -t Public -e true\n\n\n\n\nenables the Office 365 Public CDN on the current tenant\n\n\nspo tenant cdn set -t Public -e false\n\n\n\n\ndisables the Office 365 Public CDN on the current tenant\n\n\nMore information\n\n\n\n\nGeneral availability of Office 365 CDN: https://dev.office.com/blogs/general-availability-of-office-365-cdn", 
+            "title": "tenant cdn set"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-set/#spo-tenant-cdn-set", 
+            "text": "Enable or disable the specified Office 365 CDN", 
+            "title": "spo tenant cdn set"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-set/#usage", 
+            "text": "spo tenant cdn set [options]", 
+            "title": "Usage"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-set/#options", 
+            "text": "Option  Description      --help  output usage information    -e, --enabled  enabled  Set to true to enable CDN or to false to disable it. Valid values are true    -t, --type [type]  Type of CDN to manage.  Public|Private . Default  Public    --verbose  Runs command with verbose logging      Important:  before using this command, connect to a SharePoint Online tenant admin site, using the  spo connect  command.", 
+            "title": "Options"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-set/#remarks", 
+            "text": "To enable or disable an Office 365 CDN, you have to first connect to a tenant admin site using the spo connect  command, eg.  spo connect https://contoso-admin.sharepoint.com .\nIf you are connected to a different site and will try to manage tenant properties,\nyou will get an error.  Using the  -t, --type  option you can choose whether you want to manage the settings of\nthe Public (default) or Private CDN. If you don't use the option, the command will use the Public CDN.  Using the  -e, --enabled  option you can specify whether the given CDN type should be\nenabled or disabled. Use true to enable the specified CDN and false to\ndisable it.", 
+            "title": "Remarks"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-set/#examples", 
+            "text": "spo tenant cdn set -t Public -e true  enables the Office 365 Public CDN on the current tenant  spo tenant cdn set -t Public -e false  disables the Office 365 Public CDN on the current tenant", 
+            "title": "Examples"
+        }, 
+        {
+            "location": "/cmd/spo/tenant-cdn-set/#more-information", 
+            "text": "General availability of Office 365 CDN: https://dev.office.com/blogs/general-availability-of-office-365-cdn", 
+            "title": "More information"
+        }, 
+        {
+            "location": "/about/why-cli/", 
+            "text": "Why this CLI\n\n\nOffice 365 CLI is a cross-platform CLI that allows users on any platform to manage various configuration settings of Office 365.\n\n\nWhile building solutions for Office 365 expands beyond the Windows operating system, managing many of the platform settings is possible only through PowerShell on Windows. As more and more users work on non-Windows machines, it's inconvenient for them to have to use a Windows virtual machine to configure their tenants. The Office 365 CLI allows them to configure their tenants no matter which operating system they use.", 
+            "title": "Why this CLI"
+        }, 
+        {
+            "location": "/about/why-cli/#why-this-cli", 
+            "text": "Office 365 CLI is a cross-platform CLI that allows users on any platform to manage various configuration settings of Office 365.  While building solutions for Office 365 expands beyond the Windows operating system, managing many of the platform settings is possible only through PowerShell on Windows. As more and more users work on non-Windows machines, it's inconvenient for them to have to use a Windows virtual machine to configure their tenants. The Office 365 CLI allows them to configure their tenants no matter which operating system they use.", 
+            "title": "Why this CLI"
+        }, 
+        {
+            "location": "/about/release-notes/", 
+            "text": "Release notes\n\n\nv0.1.0\n\n\nInitial release.\n\n\nNew commands:\n\n\nSharePoint Online:\n\n\n\n\nspo connect\n - connect to a SharePoint Online site\n\n\nspo disconnect\n - disconnect from SharePoint\n\n\nspo status\n - show SharePoint Online connection status\n\n\nspo storageentity get\n - get value of a tenant property\n\n\nspo storageentity list\n - list all tenant properties\n\n\nspo storageentity remove\n - remove a tenant property\n\n\nspo storageentity set\n - set a tenant property\n\n\nspo tenant cdn get\n - get Office 365 CDN status\n\n\nspo tenant cdn origin list\n - list Office 365 CDN origins\n\n\nspo tenant cdn origin remove\n - remove Office 365 CDN origin\n\n\nspo tenant cdn origin set\n - set Office 365 CDN origin\n\n\nspo tenant cdn policy list\n - list Office 365 CDN policies\n\n\nspo tenant cdn policy set\n - set Office 365 CDN policy\n\n\nspo tenant cdn set\n - enable/disable Office 365 CDN", 
+            "title": "Release notes"
+        }, 
+        {
+            "location": "/about/release-notes/#release-notes", 
+            "text": "", 
+            "title": "Release notes"
+        }, 
+        {
+            "location": "/about/release-notes/#v010", 
+            "text": "Initial release.  New commands:  SharePoint Online:   spo connect  - connect to a SharePoint Online site  spo disconnect  - disconnect from SharePoint  spo status  - show SharePoint Online connection status  spo storageentity get  - get value of a tenant property  spo storageentity list  - list all tenant properties  spo storageentity remove  - remove a tenant property  spo storageentity set  - set a tenant property  spo tenant cdn get  - get Office 365 CDN status  spo tenant cdn origin list  - list Office 365 CDN origins  spo tenant cdn origin remove  - remove Office 365 CDN origin  spo tenant cdn origin set  - set Office 365 CDN origin  spo tenant cdn policy list  - list Office 365 CDN policies  spo tenant cdn policy set  - set Office 365 CDN policy  spo tenant cdn set  - enable/disable Office 365 CDN", 
+            "title": "v0.1.0"
+        }, 
+        {
+            "location": "/about/license/", 
+            "text": "License\n\n\nCopyright (c) Microsoft Corporation. All rights reserved.\n\n\nMIT License\n\n\nPermission is hereby granted, free of charge, to any person obtaining\na copy of this software and associated documentation files (the\n\"Software\"), to deal in the Software without restriction, including\nwithout limitation the rights to use, copy, modify, merge, publish,\ndistribute, sublicense, and/or sell copies of the Software, and to\npermit persons to whom the Software is furnished to do so, subject to\nthe following conditions:\n\n\nThe above copyright notice and this permission notice shall be\nincluded in all copies or substantial portions of the Software.\n\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND,\nEXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF\nMERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND\nNONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE\nLIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION\nOF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION\nWITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.", 
+            "title": "License"
+        }, 
+        {
+            "location": "/about/license/#license", 
+            "text": "Copyright (c) Microsoft Corporation. All rights reserved.  MIT License  Permission is hereby granted, free of charge, to any person obtaining\na copy of this software and associated documentation files (the\n\"Software\"), to deal in the Software without restriction, including\nwithout limitation the rights to use, copy, modify, merge, publish,\ndistribute, sublicense, and/or sell copies of the Software, and to\npermit persons to whom the Software is furnished to do so, subject to\nthe following conditions:  The above copyright notice and this permission notice shall be\nincluded in all copies or substantial portions of the Software.  THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND,\nEXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF\nMERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND\nNONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE\nLIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION\nOF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION\nWITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.", 
+            "title": "License"
+        }
+    ]
+}
