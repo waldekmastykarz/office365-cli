@@ -8,6 +8,7 @@ scripts
 src
 types
 .gitignore
+commands.json
 CONTRIBUTING.md
 tsconfig.json
 *.map

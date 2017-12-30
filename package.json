@@ -20,7 +20,8 @@
     "build": "tsc -p .",
     "watch": "tsc -w -p .",
     "clean": "rimraf ./dist",
-    "test": "nyc -r=lcov -r=text mocha \"dist/**/*.spec.js\""
+    "test": "nyc -r=lcov -r=text mocha \"dist/**/*.spec.js\"",
+    "postinstall": "node ./dist/index.js completion generate"
   },
   "keywords": [
     "office 365",
@@ -45,6 +46,7 @@
   "dependencies": {
     "applicationinsights": "^1.0.1",
     "easy-table": "^1.1.0",
+    "omelette": "^0.4.5",
     "request-promise-native": "^1.0.5",
     "vorpal": "^1.12.0"
   },

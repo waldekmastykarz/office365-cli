@@ -6,6 +6,7 @@ import config from './config';
 import Command from './Command';
 import appInsights from './appInsights';
 import Utils from './Utils';
+import { autocomplete } from './autocomplete';
 
 const packageJSON = require('../package.json');
 const vorpal: Vorpal = require('./vorpal-init'),
@@ -42,6 +43,22 @@ fs.realpath(__dirname, (err: NodeJS.ErrnoException, resolvedPath: string): void 
       this.log(packageJSON.version);
       cb();
     });
+
+  vorpal
+    .command('completion generate', 'Refresh CLI autocomplete')
+    .action(function (this: CommandInstance, args: any, cb: () => void) {
+      autocomplete.generateAutocomplete(vorpal);
+      cb();
+    })
+    .hidden();
+
+  vorpal
+    .command('completion setup', 'Setup CLI autocomplete')
+    .action(function (this: CommandInstance, args: any, cb: () => void) {
+      autocomplete.setupAutocomplete();
+      cb();
+    })
+    .hidden();
 
   vorpal.pipe((stdout: any): any => {
     return Utils.logOutput(stdout);
