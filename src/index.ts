@@ -49,6 +49,10 @@ fs.realpath(__dirname, (err: NodeJS.ErrnoException, resolvedPath: string): void 
 
   let v: Vorpal | null = null;
   try {
+    if (process.argv.length > 2) {
+      vorpal.delimiter('');
+      (vorpal as any).ui.attach(vorpal);
+    }
     v = vorpal.parse(process.argv);
 
     // if no command has been passed/match, run immersive mode
