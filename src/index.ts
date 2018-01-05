@@ -66,7 +66,6 @@ fs.realpath(__dirname, (err: NodeJS.ErrnoException, resolvedPath: string): void 
   try {
     if (process.argv.length > 2) {
       vorpal.delimiter('');
-      (vorpal as any).ui.attach(vorpal);
     }
     v = vorpal.parse(process.argv);
 
