@@ -1,0 +1,127 @@
+{
+  "Package": {
+    "actions": {
+      "Upload": {
+        "command": "spo app add"
+      },
+      "Publish": {
+        "command": "spo app install"
+      },
+      "UploadAndPublish": [
+        {
+          "command": "spo app add"
+        },
+        {
+          "command": "spo app install",
+          "options": {
+            "id": "{id}"
+          }
+        }
+      ]
+    }
+  },
+  "Public": {
+    "command": {
+      "command": "spo cdn set",
+      "options": {
+        "type": "Public"
+      }
+    }
+  },
+  "Public.Origins.Origin": {
+    "actions": {
+      "Add": {
+        "command": "spo cdn origin add",
+        "options": {
+          "type": "Public"
+        }
+      },
+      "Remove": {
+        "command": "spo cdn origin remove",
+        "options": {
+          "type": "Public",
+          "confirm": true
+        }
+      }
+    },
+    "mappings": {
+      "Url": "origin"
+    }
+  },
+  "Public.IncludeFileExtensions": {
+    "command": {
+      "command": "spo cdn policy set",
+      "options": {
+        "type": "Public",
+        "policy": "IncludeFileExtensions"
+      }
+    },
+    "mappings": {
+      "_value": "value"
+    }
+  },
+  "Public.ExcludeRestrictedSiteClassifications": {
+    "command": {
+      "command": "spo cdn policy set",
+      "options": {
+        "type": "Public",
+        "policy": "ExcludeRestrictedSiteClassifications"
+      }
+    },
+    "mappings": {
+      "_value": "value"
+    }
+  },
+  "Private": {
+    "command": {
+      "command": "spo cdn set",
+      "options": {
+        "type": "Private"
+      }
+    }
+  },
+  "Private.Origins.Origin": {
+    "actions": {
+      "Add": {
+        "command": "spo cdn origin add",
+        "options": {
+          "type": "Private"
+        }
+      },
+      "Remove": {
+        "command": "spo cdn origin remove",
+        "options": {
+          "type": "Private",
+          "confirm": true
+        }
+      }
+    },
+    "mappings": {
+      "Url": "origin"
+    }
+  },
+  "Private.IncludeFileExtensions": {
+    "command": {
+      "command": "spo cdn policy set",
+      "options": {
+        "type": "Private",
+        "policy": "IncludeFileExtensions"
+      }
+    },
+    "mappings": {
+      "_value": "value"
+    }
+  },
+  "Private.ExcludeRestrictedSiteClassifications": {
+    "command": {
+      "command": "spo cdn policy set",
+      "options": {
+        "type": "Private",
+        "policy": "ExcludeRestrictedSiteClassifications"
+      }
+    },
+    "mappings": {
+      "_value": "value"
+    }
+  }
+}

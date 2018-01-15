@@ -1,0 +1,50 @@
+{
+  "$schema": "./schema.json",
+  "Provisioning": {
+    "Preferences": {
+      "Author": "John Black"
+    },
+    "Tenant": {
+      "ContentDeliveryNetwork": {
+        "Public": {
+          "Enabled": true,
+          "Origins": {
+            "Origin": [
+              {
+                "Url": "*/CDNAssets",
+                "Action": "Add"
+              },
+              {
+                "Url": "sites/CDN/CDNFiles",
+                "Action": "Add"
+              },
+              {
+                "Url": "sites/CDN/CDNFiles-Wrong",
+                "Action": "Remove"
+              }
+            ]
+          },
+          "IncludeFileExtensions": "PDF,XML,JPG,JS,PNG",
+          "ExcludeRestrictedSiteClassifications": "HBI,GDPR"
+        },
+        "Private": {
+          "Enabled": true,
+          "Origins": {
+            "Origin": [
+              {
+                "Url": "sites/CDNPrivate/CDNFiles",
+                "Action": "Add"
+              },
+              {
+                "Url": "sites/CDNPrivate/CDNFiles-Wrong",
+                "Action": "Remove"
+              }
+            ]
+          },
+          "IncludeFileExtensions": "PDF,XML,JPG,JS,PNG",
+          "ExcludeRestrictedSiteClassifications": "HBI,GDPR"
+        }
+      }
+    }
+  }
+}

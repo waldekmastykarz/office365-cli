@@ -3,7 +3,7 @@ interface Vorpal {
   _command: CurrentCommand;
   commands: CommandInfo[];
   delimiter: (delimiter: string) => Vorpal;
-  exec: (command: string, callback?: () => void) => Promise<void>;
+  exec: (command: string, args?: any, callback?: (res?: any) => void) => Promise<void>;
   find: (command: string) => VorpalCommand;
   on: (event: string, handler: (data?: any) => void) => Vorpal;
   parse: (argv: string[], options?: { use: string }) => Vorpal;
