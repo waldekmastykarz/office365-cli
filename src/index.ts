@@ -1,13 +1,17 @@
-#!/usr/bin/env node
+// #!/usr/bin/env node
+import { performance } from 'perf_hooks';
+performance.mark('ttc_start');
 
 import * as fs from 'fs';
 import * as path from 'path';
 import * as updateNotifier from 'update-notifier';
 import config from './config';
-import Command from './Command';
+// import Command from './Command';
 import appInsights from './appInsights';
 import Utils from './Utils';
 import { autocomplete } from './autocomplete';
+
+import cmd from './commands_index';
 
 const packageJSON = require('../package.json');
 const vorpal: Vorpal = require('./vorpal-init'),
@@ -26,22 +30,32 @@ appInsights.trackEvent({
 updateNotifier({ pkg: packageJSON }).notify({ defer: false });
 
 fs.realpath(__dirname, (err: NodeJS.ErrnoException, resolvedPath: string): void => {
-  const commandsDir: string = path.join(resolvedPath, './o365');
-  const files: string[] = readdirR(commandsDir) as string[];
+  // const commandsDir: string = path.join(resolvedPath, './o365');
+  performance.mark('start');
+  // const files: string[] = readdirR(commandsDir) as string[];
+  performance.mark('end');
+  // performance.measure('discovering files', 'start', 'end');
 
-  files.forEach(file => {
-    if (file.indexOf(`${path.sep}commands${path.sep}`) > -1 &&
-      file.indexOf('.spec.js') === -1 &&
-      file.indexOf('.js.map') === -1) {
-      try {
-        const cmd: any = require(file);
-        if (cmd instanceof Command) {
-          cmd.init(vorpal);
-        }
-      }
-      catch { }
-    }
+  performance.mark('start');
+  (cmd as any).forEach((c: any) => {
+    c.init(vorpal);
   });
+  // files.forEach(file => {
+  //   if (file.indexOf(`${path.sep}commands${path.sep}`) > -1 &&
+  //     file.indexOf('.spec.js') === -1 &&
+  //     file.indexOf('.js.map') === -1) {
+  //     try {
+  //       const cmd: any = require(file);
+  //       if (cmd instanceof Command) {
+  //         cmd.init(vorpal);
+  //       }
+  //     }
+  //     catch { }
+  //   }
+  // });
+
+  performance.mark('end');
+  performance.measure('loading commands', 'start', 'end')
 
   if (process.argv.indexOf('--completion:clink:generate') > -1) {
     console.log(autocomplete.getClinkCompletion(vorpal));
@@ -90,6 +104,8 @@ fs.realpath(__dirname, (err: NodeJS.ErrnoException, resolvedPath: string): void 
         }
       });
     }
+    performance.mark('ttc_end');
+  performance.measure('ttc', 'ttc_start', 'ttc_end');
     v = vorpal.parse(process.argv);
 
     // if no command has been passed/match, run immersive mode
@@ -98,6 +114,9 @@ fs.realpath(__dirname, (err: NodeJS.ErrnoException, resolvedPath: string): void 
         .delimiter(chalk.red(config.delimiter + ' '))
         .show();
     }
+
+console.log(performance.getEntriesByType('measure'));
+
   }
   catch (e) {
     appInsights.trackException({
