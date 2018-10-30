@@ -10,7 +10,7 @@ interface Vorpal {
   isCommandArgKeyPairNormalized: boolean;
   log: (message: any) => void;
   on: (event: string, handler: (data?: any) => void) => Vorpal;
-  parse: (argv: string[], options?: { use: string }) => Vorpal;
+  parse: (argv: string[], options?: { stdin?: any, use?: string }) => Vorpal;
   pipe: (onStdout: (stdout: any) => any) => Vorpal;
   show: () => Vorpal;
   title: (title: string) => Vorpal;

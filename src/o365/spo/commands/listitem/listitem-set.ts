@@ -18,13 +18,14 @@ const vorpal: Vorpal = require('../../../../vorpal-init');
 
 interface CommandArgs {
   options: Options;
+  stdin?: any;
 }
 
 interface Options extends GlobalOptions {
   webUrl: string;
   listId?: string;
   listTitle?: string;
-  id: string;
+  id?: string;
   contentType?: string;
   systemUpdate?: boolean;
 }
@@ -400,6 +401,30 @@ class SpoListItemSetCommand extends SpoCommand {
         return `${args.options.listId} in option listId is not a valid GUID`;
       }
 
+      if (args.options.id) {
+        if (isNaN(args.options.id as any)) {
+          return `${args.options.id} is not a number`;
+        }
+      }
+      else {
+        this.parseStdin(args);
+        if (!this.stdin) {
+          return `Required parameter id missing`;
+        }
+
+        if (typeof this.stdin === 'number') {
+          args.options.id = this.stdin as any;
+        }
+        else {
+          if (this.stdin.Id) {
+            args.options.id = this.stdin.Id;
+          }
+          else {
+            return `${JSON.stringify(this.stdin)} cannot be assigned to the list item id`;
+          }
+        }
+      }
+
       return true;
     };
   }
@@ -407,6 +432,11 @@ class SpoListItemSetCommand extends SpoCommand {
   public commandHelp(args: {}, log: (help: string) => void): void {
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
+    log(`  stdin:
+    
+    1          ID of the list item to update
+    {"Id": 1}  JSON string with the ID of the list item to update
+    `);
     log(
       `  ${chalk.yellow('Important:')} before using this command, log in to a SharePoint Online site,
     using the ${chalk.blue(commands.LOGIN)} command.

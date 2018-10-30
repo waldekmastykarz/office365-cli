@@ -47,11 +47,14 @@ export interface ODataError {
 
 interface CommandArgs {
   options: GlobalOptions;
+  stdin?: any;
 }
 
 export default abstract class Command {
-  protected _debug: boolean = false;
-  protected _verbose: boolean = false;
+  private _debug: boolean = false;
+  private _verbose: boolean = false;
+  private _stdin: any;
+  private stdinParsed: boolean = false;
 
   protected get debug(): boolean {
     return this._debug;
@@ -59,6 +62,10 @@ export default abstract class Command {
 
   protected get verbose(): boolean {
     return this._verbose;
+  }
+
+  protected get stdin(): any {
+    return this._stdin;
   }
 
   public abstract get name(): string;
@@ -298,9 +305,38 @@ export default abstract class Command {
     this.handleError(rawResponse, cmd, callback);
   }
 
+  protected parseStdin(args: CommandArgs): void {
+    // stdin could be parsed multiple times (eg. during command validation or
+    // execution). Ensure it's done only once
+    if (this.stdinParsed) {
+      return;
+    }
+    this.stdinParsed = true;
+
+    if (!args.stdin) {
+      return;
+    }
+
+    this._stdin = args.stdin;
+    // When running the CLI in the immersive mode, value from the pipe is
+    // passed as an array with one element
+    if (Array.isArray(this._stdin) && this._stdin.length > 0) {
+      this._stdin = this._stdin[0];
+    }
+
+    if (typeof this._stdin === 'string') {
+      // if the value is a JSON string, deserialize it to object
+      try {
+        this._stdin = JSON.parse(this._stdin);
+      }
+      catch { }
+    }
+  }
+
   protected initAction(args: CommandArgs): void {
     this._debug = args.options.debug || process.env.OFFICE365CLI_DEBUG === '1';
     this._verbose = this._debug || args.options.verbose || process.env.OFFICE365CLI_VERBOSE === '1';
+    this.parseStdin(args);
 
     appInsights.trackEvent({
       name: this.getCommandName(),

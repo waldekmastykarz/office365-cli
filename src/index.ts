@@ -78,79 +78,107 @@ const loadCommandFromArgs = (args: string[], rootFolder: string): void => {
   }
 }
 
+let stdin: any;
+const runCli = (): void => {
+  fs.realpath(__dirname, (err: NodeJS.ErrnoException, resolvedPath: string): void => {
+    if (process.argv.indexOf('--completion:clink:generate') > -1) {
+      loadAllCommands(resolvedPath);
+      console.log(autocomplete.getClinkCompletion(vorpal));
+      process.exit();
+    }
+    if (process.argv.indexOf('--completion:sh:generate') > -1) {
+      loadAllCommands(resolvedPath);
+      autocomplete.generateShCompletion(vorpal);
+      process.exit();
+    }
+    if (process.argv.indexOf('--completion:sh:setup') > -1) {
+      loadAllCommands(resolvedPath);
+      autocomplete.generateShCompletion(vorpal);
+      autocomplete.setupShCompletion();
+      process.exit();
+    }
+    if (process.argv.indexOf('--reconsent') > -1) {
+      console.log(`To reconsent the PnP Office 365 Management Shell Azure AD application navigate in your web browser to https://login.microsoftonline.com/common/oauth2/authorize?client_id=${config.cliAadAppId}&response_type=code&prompt=admin_consent`);
+      process.exit();
+    }
+  
+    // disable linux-normalizing args to support JSON and XML values
+    vorpal.isCommandArgKeyPairNormalized = false;
+  
+    vorpal
+      .title('Office 365 CLI')
+      .description(packageJSON.description)
+      .version(packageJSON.version);
+  
+    vorpal
+      .command('version', 'Shows the current version of the CLI')
+      .action(function (this: CommandInstance, args: any, cb: () => void) {
+        this.log(packageJSON.version);
+        cb();
+      });
+  
+    vorpal.pipe((stdout: any): any => {
+      return Utils.logOutput(stdout);
+    });
+  
+    let v: Vorpal | null = null;
+    try {
+      if (process.argv.length > 2) {
+        vorpal.delimiter('');
+        vorpal.on('client_command_error', (err?: any): void => {
+          if (v) {
+            process.exit(1);
+          }
+        });
+      }
+  
+      loadCommandFromArgs(process.argv, resolvedPath);
+      v = vorpal.parse(process.argv, stdin ? { stdin: stdin } : undefined);
+      
+      // if no command has been passed/match, run immersive mode
+      if (!v._command) {
+        vorpal
+          .delimiter(chalk.red(config.delimiter + ' '))
+          .show();
+      }
+    }
+    catch (e) {
+      appInsights.trackException({
+        exception: e
+      });
+      appInsights.flush();
+      process.exit(1);
+    }
+  });
+}
+
 appInsights.trackEvent({
   name: 'started'
 });
 
 updateNotifier({ pkg: packageJSON }).notify({ defer: false });
 
-fs.realpath(__dirname, (err: NodeJS.ErrnoException, resolvedPath: string): void => {
-  if (process.argv.indexOf('--completion:clink:generate') > -1) {
-    loadAllCommands(resolvedPath);
-    console.log(autocomplete.getClinkCompletion(vorpal));
-    process.exit();
-  }
-  if (process.argv.indexOf('--completion:sh:generate') > -1) {
-    loadAllCommands(resolvedPath);
-    autocomplete.generateShCompletion(vorpal);
-    process.exit();
-  }
-  if (process.argv.indexOf('--completion:sh:setup') > -1) {
-    loadAllCommands(resolvedPath);
-    autocomplete.generateShCompletion(vorpal);
-    autocomplete.setupShCompletion();
-    process.exit();
-  }
-  if (process.argv.indexOf('--reconsent') > -1) {
-    console.log(`To reconsent the PnP Office 365 Management Shell Azure AD application navigate in your web browser to https://login.microsoftonline.com/common/oauth2/authorize?client_id=${config.cliAadAppId}&response_type=code&prompt=admin_consent`);
-    process.exit();
-  }
-
-  // disable linux-normalizing args to support JSON and XML values
-  vorpal.isCommandArgKeyPairNormalized = false;
-
-  vorpal
-    .title('Office 365 CLI')
-    .description(packageJSON.description)
-    .version(packageJSON.version);
-
-  vorpal
-    .command('version', 'Shows the current version of the CLI')
-    .action(function (this: CommandInstance, args: any, cb: () => void) {
-      this.log(packageJSON.version);
-      cb();
-    });
-
-  vorpal.pipe((stdout: any): any => {
-    return Utils.logOutput(stdout);
+if (process.stdin.isTTY) {
+  runCli();
+}
+else {
+  stdin = '';
+  process.stdin.setEncoding('utf-8');
+ 
+  process.stdin.on('readable', function() {
+    let chunk;
+    while (chunk = process.stdin.read()) {
+      stdin += chunk;
+    }
   });
-
-  let v: Vorpal | null = null;
-  try {
-    if (process.argv.length > 2) {
-      vorpal.delimiter('');
-      vorpal.on('client_command_error', (err?: any): void => {
-        if (v) {
-          process.exit(1);
-        }
-      });
+ 
+  process.stdin.on('end', function () {
+    // There will be a trailing \n from the user hitting enter. Get rid of it.
+    stdin = stdin.replace(/\n$/, '');
+    try {
+      stdin = JSON.parse(stdin);
     }
-
-    loadCommandFromArgs(process.argv, resolvedPath);
-    v = vorpal.parse(process.argv);
-    
-    // if no command has been passed/match, run immersive mode
-    if (!v._command) {
-      vorpal
-        .delimiter(chalk.red(config.delimiter + ' '))
-        .show();
-    }
-  }
-  catch (e) {
-    appInsights.trackException({
-      exception: e
-    });
-    appInsights.flush();
-    process.exit(1);
-  }
-});
+    catch {}
+    runCli();
+  });
+}

@@ -4224,8 +4224,8 @@
       }
     },
     "vorpal": {
-      "version": "https://github.com/pnp/vorpal/raw/master/vorpal-1.11.4.tgz",
-      "integrity": "sha512-b13/2tzghxlZN2xXq/iIVjjKO865mZTF4EU8C8gnCPYtowtGISIRh/kALz1ckMAV0oLcozouVIH5tccqfgzHsA==",
+      "version": "https://github.com/pnp/vorpal/raw/master/vorpal-1.11.5.tgz",
+      "integrity": "sha512-eQXhHrDO5LWu5MPURt8qzZ3jIvlmKyCHq/FQAZfUvH+cscJKLmPwHAEq8t5mlPkXh+vqmNdYfRGLu7PEoKygeA==",
       "requires": {
         "babel-polyfill": "^6.3.14",
         "chalk": "^1.1.0",
