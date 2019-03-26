@@ -1,6 +1,7 @@
-import auth from '../GraphAuth';
+import auth from '../../../Auth';
 import GraphCommand from "../GraphCommand";
 import request from '../../../request';
+import Utils from '../../../Utils';
 import { GraphResponse } from '../GraphResponse';
 
 export abstract class GraphItemsListCommand<T> extends GraphCommand {
@@ -15,12 +16,12 @@ export abstract class GraphItemsListCommand<T> extends GraphCommand {
   protected getAllItems(url: string, cmd: CommandInstance, firstRun: boolean): Promise<void> {
     return new Promise<void>((resolve: () => void, reject: (error: any) => void): void => {
       auth
-        .ensureAccessToken(auth.service.resource, cmd, this.debug)
-        .then((): Promise<GraphResponse<T>> => {
+        .ensureAccessToken(this.resource, cmd, this.debug)
+        .then((accessToken: string): Promise<GraphResponse<T>> => {
           const requestOptions: any = {
             url: url,
             headers: {
-              authorization: `Bearer ${auth.service.accessToken}`,
+              authorization: `Bearer ${accessToken}`,
               accept: 'application/json;odata.metadata=none'
             },
             json: true

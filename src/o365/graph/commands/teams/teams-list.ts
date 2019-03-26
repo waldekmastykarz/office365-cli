@@ -1,4 +1,4 @@
-import auth from '../../GraphAuth';
+import auth from '../../../../Auth';
 import config from '../../../../config';
 import commands from '../../commands';
 import GlobalOptions from '../../../../GlobalOptions';
@@ -8,6 +8,7 @@ import {
 import { Team } from './Team';
 import { GraphItemsListCommand } from '../GraphItemsListCommand';
 import request from '../../../../request';
+import Utils from '../../../../Utils';
 
 const vorpal: Vorpal = require('../../../../vorpal-init');
 
@@ -35,10 +36,9 @@ class TeamsListCommand extends GraphItemsListCommand<Team> {
   }
 
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
-
-    let endpoint: string = `${auth.service.resource}/beta/groups?$filter=resourceProvisioningOptions/Any(x:x eq 'Team')&$select=id,displayName,description`;
+    let endpoint: string = `${this.resource}/beta/groups?$filter=resourceProvisioningOptions/Any(x:x eq 'Team')&$select=id,displayName,description`;
     if (args.options.joined) {
-      endpoint = `${auth.service.resource}/beta/me/joinedTeams`;
+      endpoint = `${this.resource}/beta/me/joinedTeams`;
     }
     this
       .getAllItems(endpoint, cmd, true)
@@ -67,12 +67,12 @@ class TeamsListCommand extends GraphItemsListCommand<Team> {
   private getTeamFromGroup(group: { id: string, displayName: string, description: string }, cmd: CommandInstance): Promise<Team> {
     return new Promise<Team>((resolve: (team: Team) => void, reject: (error: any) => void): void => {
       auth
-        .ensureAccessToken(auth.service.resource, cmd, this.debug)
-        .then((): Promise<{}> => {
+        .ensureAccessToken(this.resource, cmd, this.debug)
+        .then((accessToken: string): Promise<{}> => {
           const requestOptions: any = {
-            url: `${auth.service.resource}/beta/teams/${group.id}`,
+            url: `${this.resource}/beta/teams/${group.id}`,
             headers: {
-              authorization: `Bearer ${auth.service.accessToken}`,
+              authorization: `Bearer ${accessToken}`,
               accept: 'application/json;odata.metadata=none'
             },
             json: true

@@ -1,6 +1,7 @@
 import Command, { CommandAction, CommandError } from '../../Command';
-import auth from './SpoAuth';
+import auth, { Logger } from '../../Auth';
 import request from '../../request';
+import Utils from '../../Utils';
 import { SpoOperation } from './commands/site/SpoOperation';
 import config from '../../config';
 import { FormDigestInfo, ClientSvcResponse, ClientSvcResponseContents } from './spo';
@@ -24,17 +25,17 @@ export default abstract class SpoCommand extends Command {
         .then((): void => {
           cmd.initAction(args, this);
 
-          if (!auth.site.connected) {
-            cb(new CommandError('Log in to a SharePoint Online site first'));
-            return;
-          }
+          // if (!auth.site.connected) {
+          //   cb(new CommandError('Log in to a SharePoint Online site first'));
+          //   return;
+          // }
 
-          if (cmd.requiresTenantAdmin()) {
-            if (!auth.site.isTenantAdminSite()) {
-              cb(new CommandError(`${auth.site.url} is not a tenant admin site. Log in to your tenant admin site and try again`));
-              return;
-            }
-          }
+          // if (cmd.requiresTenantAdmin()) {
+          //   if (!auth.site.isTenantAdminSite()) {
+          //     cb(new CommandError(`${auth.site.url} is not a tenant admin site. Log in to your tenant admin site and try again`));
+          //     return;
+          //   }
+          // }
 
           cmd.commandAction(this, args, cb);
         }, (error: any): void => {
@@ -165,5 +166,54 @@ export default abstract class SpoCommand extends Command {
           }, operation.PollingInterval);
         }
       });
+  }
+
+  protected getSpoUrl(stdout: Logger, debug: boolean): Promise<string> {
+    if (auth.service.spoUrl) {
+      return Promise.resolve(auth.service.spoUrl);
+    }
+
+    return new Promise<string>((resolve: (spoUrl: string) => void, reject: (error: any) => void): void => {
+      auth
+        .ensureAccessToken('https://graph.microsoft.com', stdout, debug)
+        .then((accessToken: string): Promise<{ webUrl: string }> => {
+          const requestOptions: any = {
+            url: `https://graph.microsoft.com/v1.0/sites/root?$select=webUrl`,
+            headers: {
+              authorization: `Bearer ${accessToken}`,
+              'accept': 'application/json;odata.metadata=none'
+            },
+            json: true,
+          };
+
+          return request.get(requestOptions);
+        })
+        .then((res: { webUrl: string }): Promise<void> => {
+          auth.service.spoUrl = res.webUrl;
+          return auth.storeConnectionInfo();
+        })
+        .then((): void => {
+          resolve(auth.service.spoUrl as string);
+        }, (err: any): void => {
+          if (auth.service.spoUrl) {
+            resolve(auth.service.spoUrl);
+          }
+          else {
+            reject(err);
+          }
+        });
+    });
+  }
+
+  protected getSpoAdminUrl(stdout: Logger, debug: boolean): Promise<string> {
+    return new Promise<string>((resolve: (spoAdminUrl: string) => void, reject: (error: any) => void): void => {
+      this
+        .getSpoUrl(stdout, debug)
+        .then((spoUrl: string): void => {
+          resolve(spoUrl.replace(/(https:\/\/)([^\.]+)(.*)/, '$1$2-admin$3'));
+        }, (error: any): void => {
+          reject(error);
+        })
+    });
   }
 }

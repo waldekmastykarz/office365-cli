@@ -1,4 +1,4 @@
-import auth from '../../SpoAuth';
+import auth from '../../../../Auth';
 import config from '../../../../config';
 import commands from '../../commands';
 import request from '../../../../request';
@@ -46,17 +46,22 @@ class SpoAppListCommand extends SpoAppBaseCommand {
     const scope: string = (args.options.scope) ? args.options.scope.toLowerCase() : 'tenant';
     let siteAccessToken: string = '';
     let appCatalogSiteUrl: string = '';
+    let spoUrl: string = '';
 
-    auth
-      .ensureAccessToken(auth.site.url, cmd, this.debug)
+    this
+      .getSpoUrl(cmd, this.debug)
+      .then((_spoUrl: string): Promise<string> => {
+        spoUrl = _spoUrl;
+        return auth.ensureAccessToken(spoUrl, cmd, this.debug)
+      })
       .then((accessToken: string): Promise<string> => {
-        return this.getAppCatalogSiteUrl(cmd, auth.site.url, accessToken, args)
+        return this.getAppCatalogSiteUrl(cmd, spoUrl, accessToken, args)
       })
       .then((appCatalogUrl: string): Promise<string> => {
         appCatalogSiteUrl = appCatalogUrl;
 
         const resource: string = Auth.getResourceFromUrl(appCatalogSiteUrl);
-        return auth.getAccessToken(resource, auth.service.refreshToken as string, cmd, this.debug);
+        return auth.ensureAccessToken(resource, cmd, this.debug);
       })
       .then((accessToken: string): Promise<{ value: AppMetadata[] }> => {
         siteAccessToken = accessToken;
