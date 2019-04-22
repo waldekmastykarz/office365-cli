@@ -9,13 +9,13 @@ import { AuthType } from '../../Auth';
 
 const vorpal: Vorpal = require('../../vorpal-init');
 
-class GraphStatusCommand extends Command {
+class StatusCommand extends Command {
   public get name(): string {
     return commands.STATUS;
   }
 
   public get description(): string {
-    return 'Shows Microsoft Graph login status';
+    return 'Shows Office 365 login status';
   }
 
   public commandAction(cmd: CommandInstance, args: {}, cb: (err?: any) => void): void {
@@ -70,4 +70,4 @@ class GraphStatusCommand extends Command {
   }
 }
 
-module.exports = new GraphStatusCommand();
+module.exports = new StatusCommand();

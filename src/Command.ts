@@ -1,6 +1,7 @@
 import appInsights from './appInsights';
 import GlobalOptions from './GlobalOptions';
 import request from './request';
+import auth from './Auth';
 
 const vorpal: Vorpal = require('./vorpal-init');
 
@@ -96,10 +97,22 @@ export default abstract class Command {
 
   public action(): CommandAction {
     const cmd: Command = this;
-    return function (this: CommandInstance, args: CommandArgs, cb: () => void) {
-      args = cmd.processArgs(args);
-      cmd.initAction(args, this);
-      cmd.commandAction(this, args, cb);
+    return function (this: CommandInstance, args: CommandArgs, cb: (err?: any) => void) {
+      auth
+        .restoreAuth()
+        .then((): void => {
+          args = cmd.processArgs(args);
+          cmd.initAction(args, this);
+
+          if (!auth.service.connected) {
+            cb(new CommandError('Log in to Office 365 first'));
+            return;
+          }
+
+          cmd.commandAction(this, args, cb);
+        }, (error: any): void => {
+          cb(new CommandError(error));
+        });
     }
   }
 
@@ -313,7 +326,7 @@ export default abstract class Command {
     appInsights.flush();
   }
 
-  private processArgs(args: CommandArgs): CommandArgs {
+  protected processArgs(args: CommandArgs): CommandArgs {
     if (!this.allowUnknownOptions()) {
       return args;
     }
@@ -342,7 +355,7 @@ export default abstract class Command {
         cmd._types.string.push(a.substr(2));
       }
     });
-    
+
     args = vorpal.util.buildCommandArgs(commandData.matchArgs, cmd, undefined, vorpal.isCommandArgKeyPairNormalized);
 
     return args;

@@ -8,7 +8,6 @@ import {
 } from '../../../../Command';
 import { AppMetadata } from './AppMetadata';
 import GlobalOptions from '../../../../GlobalOptions';
-import { Auth } from '../../../../Auth';
 import { SpoAppBaseCommand } from './SpoAppBaseCommand';
 
 const vorpal: Vorpal = require('../../../../vorpal-init');
@@ -44,7 +43,6 @@ class SpoAppListCommand extends SpoAppBaseCommand {
 
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
     const scope: string = (args.options.scope) ? args.options.scope.toLowerCase() : 'tenant';
-    let siteAccessToken: string = '';
     let appCatalogSiteUrl: string = '';
     let spoUrl: string = '';
 
@@ -52,23 +50,10 @@ class SpoAppListCommand extends SpoAppBaseCommand {
       .getSpoUrl(cmd, this.debug)
       .then((_spoUrl: string): Promise<string> => {
         spoUrl = _spoUrl;
-        return auth.ensureAccessToken(spoUrl, cmd, this.debug)
+        return this.getAppCatalogSiteUrl(cmd, spoUrl, args)
       })
-      .then((accessToken: string): Promise<string> => {
-        return this.getAppCatalogSiteUrl(cmd, spoUrl, accessToken, args)
-      })
-      .then((appCatalogUrl: string): Promise<string> => {
+      .then((appCatalogUrl: string): Promise<{ value: AppMetadata[] }> => {
         appCatalogSiteUrl = appCatalogUrl;
-
-        const resource: string = Auth.getResourceFromUrl(appCatalogSiteUrl);
-        return auth.ensureAccessToken(resource, cmd, this.debug);
-      })
-      .then((accessToken: string): Promise<{ value: AppMetadata[] }> => {
-        siteAccessToken = accessToken;
-
-        if (this.debug) {
-          cmd.log(`Retrieved access token ${accessToken}...`);
-        }
 
         if (this.verbose) {
           cmd.log(`Retrieving apps...`);
@@ -77,7 +62,6 @@ class SpoAppListCommand extends SpoAppBaseCommand {
         const requestOptions: any = {
           url: `${appCatalogSiteUrl}/_api/web/${scope}appcatalog/AvailableApps`,
           headers: {
-            authorization: `Bearer ${siteAccessToken}`,
             accept: 'application/json;odata=nometadata'
           },
           json: true

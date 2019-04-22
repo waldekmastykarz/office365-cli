@@ -6,8 +6,6 @@ import { FileTokenStorage } from './auth/FileTokenStorage';
 import { AuthenticationContext, TokenResponse, ErrorResponse, UserCodeInfo, Logging, LoggingLevel } from 'adal-node';
 import { CommandError } from './Command';
 import config from './config';
-import Utils from './Utils';
-import * as request from 'request-promise-native';
 
 export interface Hash<TValue> {
   [key: string]: TValue;

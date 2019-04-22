@@ -1,7 +1,7 @@
 import config from '../../../../config';
 import commands from '../../commands';
 import Command, {
-  CommandOption, CommandError
+  CommandOption, CommandError, CommandAction
 } from '../../../../Command';
 import GlobalOptions from '../../../../GlobalOptions';
 import * as path from 'path';
@@ -71,6 +71,15 @@ class SpfxProjectUpgradeCommand extends Command {
     const telemetryProps: any = super.getTelemetryProperties(args);
     telemetryProps.toVersion = args.options.toVersion || this.supportedVersions[this.supportedVersions.length - 1];
     return telemetryProps;
+  }
+
+  public action(): CommandAction {
+    const cmd: Command = this;
+    return function (this: CommandInstance, args: CommandArgs, cb: (err?: any) => void) {
+      args = cmd.processArgs(args);
+      cmd.initAction(args, this);
+      cmd.commandAction(this, args, cb);
+    }
   }
 
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: (err?: any) => void): void {

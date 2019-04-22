@@ -1,14 +1,13 @@
 import Command, { CommandAction, CommandError } from '../../Command';
 import auth, { Logger } from '../../Auth';
 import request from '../../request';
-import Utils from '../../Utils';
 import { SpoOperation } from './commands/site/SpoOperation';
 import config from '../../config';
 import { FormDigestInfo, ClientSvcResponse, ClientSvcResponseContents } from './spo';
 
 export interface FormDigest {
-  formDigestValue: string; 
-  formDigestExpiresAt: Date; 
+  formDigestValue: string;
+  formDigestExpiresAt: Date;
 }
 
 export default abstract class SpoCommand extends Command {
@@ -24,19 +23,6 @@ export default abstract class SpoCommand extends Command {
         .restoreAuth()
         .then((): void => {
           cmd.initAction(args, this);
-
-          // if (!auth.site.connected) {
-          //   cb(new CommandError('Log in to a SharePoint Online site first'));
-          //   return;
-          // }
-
-          // if (cmd.requiresTenantAdmin()) {
-          //   if (!auth.site.isTenantAdminSite()) {
-          //     cb(new CommandError(`${auth.site.url} is not a tenant admin site. Log in to your tenant admin site and try again`));
-          //     return;
-          //   }
-          // }
-
           cmd.commandAction(this, args, cb);
         }, (error: any): void => {
           cb(new CommandError(error));
@@ -44,15 +30,10 @@ export default abstract class SpoCommand extends Command {
     }
   }
 
-  protected getRequestDigest(cmd: CommandInstance, debug: boolean): Promise<FormDigestInfo> {
-    return this.getRequestDigestForSite(auth.site.url, auth.site.accessToken, cmd, debug);
-  }
-
-  protected getRequestDigestForSite(siteUrl: string, accessToken: string, cmd: CommandInstance, debug: boolean): Promise<FormDigestInfo> {
+  protected getRequestDigest(siteUrl: string): Promise<FormDigestInfo> {
     const requestOptions: any = {
       url: `${siteUrl}/_api/contextinfo`,
       headers: {
-        authorization: `Bearer ${accessToken}`,
         accept: 'application/json;odata=nometadata'
       },
       json: true
@@ -74,7 +55,7 @@ export default abstract class SpoCommand extends Command {
     }
   }
 
-  public ensureFormDigest(cmd: CommandInstance, context: FormDigestInfo | undefined, debug: boolean): Promise<FormDigestInfo> {
+  public ensureFormDigest(siteUrl: string, cmd: CommandInstance, context: FormDigestInfo | undefined, debug: boolean): Promise<FormDigestInfo> {
     return new Promise<FormDigestInfo>((resolve: (context: FormDigestInfo) => void, reject: (error: any) => void): void => {
       if (this.isValidFormDigest(context)) {
         if (debug) {
@@ -82,11 +63,11 @@ export default abstract class SpoCommand extends Command {
         }
 
         resolve(context as FormDigestInfo);
-        return; 
+        return;
       }
 
       this
-        .getRequestDigest(cmd, debug)
+        .getRequestDigest(siteUrl)
         .then((res: FormDigestInfo): void => {
           const now: Date = new Date();
           now.setSeconds(now.getSeconds() + res.FormDigestTimeoutSeconds - 5);
@@ -117,9 +98,9 @@ export default abstract class SpoCommand extends Command {
     return false;
   }
 
-  protected waitUntilFinished(operationId: string, resolve: () => void, reject: (error: any) => void, accessToken: string, cmd: CommandInstance, currentContext: FormDigestInfo, dots?: string, timeout?: NodeJS.Timer): void {
+  protected waitUntilFinished(operationId: string, siteUrl: string, resolve: () => void, reject: (error: any) => void, cmd: CommandInstance, currentContext: FormDigestInfo, dots?: string, timeout?: NodeJS.Timer): void {
     this
-      .ensureFormDigest(cmd, currentContext, this.debug)
+      .ensureFormDigest(siteUrl, cmd, currentContext, this.debug)
       .then((res: FormDigestInfo): Promise<string> => {
         currentContext = res;
 
@@ -133,9 +114,8 @@ export default abstract class SpoCommand extends Command {
         }
 
         const requestOptions: any = {
-          url: `${auth.site.url}/_vti_bin/client.svc/ProcessQuery`,
+          url: `${siteUrl}/_vti_bin/client.svc/ProcessQuery`,
           headers: {
-            authorization: `Bearer ${auth.service.accessToken}`,
             'X-RequestDigest': currentContext.FormDigestValue
           },
           body: `<Request AddExpandoFieldTypeSuffix="true" SchemaVersion="15.0.0.0" LibraryVersion="16.0.0.0" ApplicationName="${config.applicationName}" xmlns="http://schemas.microsoft.com/sharepoint/clientquery/2009"><Actions><Query Id="188" ObjectPathId="184"><Query SelectAllProperties="false"><Properties><Property Name="IsComplete" ScalarProperty="true" /><Property Name="PollingInterval" ScalarProperty="true" /></Properties></Query></Query></Actions><ObjectPaths><Identity Id="184" Name="${operationId.replace(/\\n/g, '&#xA;').replace(/"/g, '')}" /></ObjectPaths></Request>`
@@ -162,7 +142,7 @@ export default abstract class SpoCommand extends Command {
           }
 
           timeout = setTimeout(() => {
-            this.waitUntilFinished(JSON.stringify(operation._ObjectIdentity_), resolve, reject, accessToken, cmd, currentContext, dots);
+            this.waitUntilFinished(JSON.stringify(operation._ObjectIdentity_), siteUrl, resolve, reject, cmd, currentContext, dots);
           }, operation.PollingInterval);
         }
       });
@@ -170,24 +150,28 @@ export default abstract class SpoCommand extends Command {
 
   protected getSpoUrl(stdout: Logger, debug: boolean): Promise<string> {
     if (auth.service.spoUrl) {
+      if (debug) {
+        stdout.log(`SPO URL previously retrieved ${auth.service.spoUrl}. Returning...`);
+      }
+
       return Promise.resolve(auth.service.spoUrl);
     }
 
     return new Promise<string>((resolve: (spoUrl: string) => void, reject: (error: any) => void): void => {
-      auth
-        .ensureAccessToken('https://graph.microsoft.com', stdout, debug)
-        .then((accessToken: string): Promise<{ webUrl: string }> => {
-          const requestOptions: any = {
-            url: `https://graph.microsoft.com/v1.0/sites/root?$select=webUrl`,
-            headers: {
-              authorization: `Bearer ${accessToken}`,
-              'accept': 'application/json;odata.metadata=none'
-            },
-            json: true,
-          };
+      if (debug) {
+        stdout.log(`No SPO URL available. Retrieving from MS Graph...`);
+      }
 
-          return request.get(requestOptions);
-        })
+      const requestOptions: any = {
+        url: `https://graph.microsoft.com/v1.0/sites/root?$select=webUrl`,
+        headers: {
+          'accept': 'application/json;odata.metadata=none'
+        },
+        json: true
+      };
+
+      request
+        .get<{ webUrl: string }>(requestOptions)
         .then((res: { webUrl: string }): Promise<void> => {
           auth.service.spoUrl = res.webUrl;
           return auth.storeConnectionInfo();
@@ -213,7 +197,7 @@ export default abstract class SpoCommand extends Command {
           resolve(spoUrl.replace(/(https:\/\/)([^\.]+)(.*)/, '$1$2-admin$3'));
         }, (error: any): void => {
           reject(error);
-        })
+        });
     });
   }
 }

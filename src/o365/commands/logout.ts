@@ -1,30 +1,24 @@
-import auth from '../GraphAuth';
-import commands from '../commands';
-import config from '../../../config';
+import auth from '../../Auth';
+import config from '../../config';
+import commands from './commands';
 import Command, {
   CommandError,
-} from '../../../Command';
-import appInsights from '../../../appInsights';
+} from '../../Command';
+import appInsights from '../../appInsights';
 
-const vorpal: Vorpal = require('../../../vorpal-init');
+const vorpal: Vorpal = require('../../vorpal-init');
 
-class GraphLogoutCommand extends Command {
+class LogoutCommand extends Command {
   public get name(): string {
     return commands.LOGOUT;
   }
 
   public get description(): string {
-    return 'Log out from the Microsoft Graph';
-  }
-
-  public alias(): string[] | undefined {
-    return [commands.DISCONNECT];
+    return 'Log out from Office 365';
   }
 
   public commandAction(cmd: CommandInstance, args: {}, cb: () => void): void {
     const chalk = vorpal.chalk;
-    
-    this.showDeprecationWarning(cmd, commands.DISCONNECT, commands.LOGIN);
 
     appInsights.trackEvent({
       name: this.getUsedCommandName(cmd)
@@ -76,4 +70,4 @@ class GraphLogoutCommand extends Command {
   }
 }
 
-module.exports = new GraphLogoutCommand();
+module.exports = new LogoutCommand();

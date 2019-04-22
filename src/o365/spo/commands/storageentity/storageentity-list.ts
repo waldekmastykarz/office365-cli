@@ -1,4 +1,4 @@
-import auth from '../../SpoAuth';
+import auth from '../../../../Auth';
 import { Auth } from '../../../../Auth';
 import config from '../../../../config';
 import request from '../../../../request';
@@ -37,28 +37,20 @@ class SpoStorageEntityListCommand extends SpoCommand {
       cmd.log(`Retrieving access token for ${resource} using refresh token ${auth.service.refreshToken}...`);
     }
 
-    auth
-      .getAccessToken(resource, auth.service.refreshToken as string, cmd, this.debug)
-      .then((accessToken: string): Promise<{ storageentitiesindex?: string }> => {
-        if (this.debug) {
-          cmd.log(`Retrieved access token ${accessToken}. Loading all tenant properties...`);
-        }
+    if (this.verbose) {
+      cmd.log(`Retrieving details for all tenant properties in ${args.options.appCatalogUrl}...`);
+    }
 
-        if (this.verbose) {
-          cmd.log(`Retrieving details for all tenant properties in ${args.options.appCatalogUrl}...`);
-        }
+    const requestOptions: any = {
+      url: `${args.options.appCatalogUrl}/_api/web/AllProperties?$select=storageentitiesindex`,
+      headers: {
+        accept: 'application/json;odata=nometadata'
+      },
+      json: true
+    };
 
-        const requestOptions: any = {
-          url: `${args.options.appCatalogUrl}/_api/web/AllProperties?$select=storageentitiesindex`,
-          headers: {
-            authorization: `Bearer ${accessToken}`,
-            accept: 'application/json;odata=nometadata'
-          },
-          json: true
-        };
-
-        return request.get(requestOptions);
-      })
+    request
+      .get<{ storageentitiesindex?: string }>(requestOptions)
       .then((web: { storageentitiesindex?: string }): void => {
         try {
           if (!web.storageentitiesindex ||
