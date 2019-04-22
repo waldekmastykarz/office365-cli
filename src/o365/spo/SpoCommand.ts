@@ -3,7 +3,7 @@ import auth, { Logger } from '../../Auth';
 import request from '../../request';
 import { SpoOperation } from './commands/site/SpoOperation';
 import config from '../../config';
-import { FormDigestInfo, ClientSvcResponse, ClientSvcResponseContents } from './spo';
+import { FormDigestInfo, ClientSvcResponse, ClientSvcResponseContents, ContextInfo } from './spo';
 
 export interface FormDigest {
   formDigestValue: string;
@@ -197,6 +197,58 @@ export default abstract class SpoCommand extends Command {
           resolve(spoUrl.replace(/(https:\/\/)([^\.]+)(.*)/, '$1$2-admin$3'));
         }, (error: any): void => {
           reject(error);
+        });
+    });
+  }
+
+  protected getTenantId(stdout: Logger, debug: boolean): Promise<string> {
+    if (auth.service.tenantId) {
+      if (debug) {
+        stdout.log(`SPO Tenant ID previously retrieved ${auth.service.tenantId}. Returning...`);
+      }
+
+      return Promise.resolve(auth.service.tenantId);
+    }
+
+    return new Promise<string>((resolve: (spoUrl: string) => void, reject: (error: any) => void): void => {
+      if (debug) {
+        stdout.log(`No SPO Tenant ID available. Retrieving...`);
+      }
+
+      let spoAdminUrl: string = '';
+
+      this
+        .getSpoAdminUrl(stdout, debug)
+        .then((_spoAdminUrl: string): Promise<ContextInfo> => {
+          spoAdminUrl = _spoAdminUrl;
+          return this.getRequestDigest(spoAdminUrl);
+        })
+        .then((contextInfo: ContextInfo): Promise<string> => {
+          const tenantInfoRequestOptions = {
+            url: `${spoAdminUrl}/_vti_bin/client.svc/ProcessQuery`,
+            headers: {
+              'X-RequestDigest': contextInfo.FormDigestValue,
+              accept: 'application/json;odata=nometadata'
+            },
+            body: `<Request AddExpandoFieldTypeSuffix="true" SchemaVersion="15.0.0.0" LibraryVersion="16.0.0.0" ApplicationName="${config.applicationName}" xmlns="http://schemas.microsoft.com/sharepoint/clientquery/2009"><Actions><ObjectPath Id="4" ObjectPathId="3" /><Query Id="5" ObjectPathId="3"><Query SelectAllProperties="true"><Properties /></Query></Query></Actions><ObjectPaths><Constructor Id="3" TypeId="{268004ae-ef6b-4e9b-8425-127220d84719}" /></ObjectPaths></Request>`
+          };
+
+          return request.post(tenantInfoRequestOptions);
+        })
+        .then((res: string): Promise<void> => {
+          const json: string[] = JSON.parse(res);
+          auth.service.tenantId = (json[json.length - 1] as any)._ObjectIdentity_.replace('\n', '&#xA;');
+          return auth.storeConnectionInfo();
+        })
+        .then((): void => {
+          resolve(auth.service.tenantId as string);
+        }, (err: any): void => {
+          if (auth.service.tenantId) {
+            resolve(auth.service.tenantId);
+          }
+          else {
+            reject(err);
+          }
         });
     });
   }

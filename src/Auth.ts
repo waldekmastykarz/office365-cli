@@ -26,6 +26,7 @@ export class Service {
   thumbprint?: string;
   accessTokens: Hash<AccessToken>;
   spoUrl?: string;
+  tenantId?: string;
 
   constructor() {
     this.accessTokens = {};
@@ -41,6 +42,7 @@ export class Service {
     this.certificate = undefined;
     this.thumbprint = undefined;
     this.spoUrl = undefined;
+    this.tenantId = undefined;
   }
 }
 
