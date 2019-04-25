@@ -177,7 +177,7 @@ class LoginCommand extends Command {
     log(
       `  Remarks:
     
-    Using the ${chalk.blue(commands.LOGIN)} command you can log in to the Microsoft Graph.
+    Using the ${chalk.blue(commands.LOGIN)} command you log in to Office 365.
 
     By default, the ${chalk.blue(commands.LOGIN)} command uses device code OAuth flow
     to log in to the Microsoft Graph. Alternatively, you can
@@ -185,44 +185,43 @@ class LoginCommand extends Command {
     convenient for CI/CD scenarios, but which come with their own limitations.
     See the Office 365 CLI manual for more information.
     
-    When logging in to the Microsoft Graph, the ${chalk.blue(commands.LOGIN)} command stores
+    When logging in to Office 365, the ${chalk.blue(commands.LOGIN)} command stores
     in memory the access token and the refresh token. Both tokens are cleared
     from memory after exiting the CLI or by calling the ${chalk.blue(commands.LOGOUT)}
     command.
 
-    When logging in to the Microsoft Graph using the user name and
-    password, next to the access and refresh token, the Office 365 CLI will
-    store the user credentials so that it can automatically re-authenticate if
-    necessary. Similarly to the tokens, the credentials are removed by
-    re-authenticating using the device code or by calling the ${chalk.blue(commands.LOGOUT)}
-    command.
+    When logging in to Office 365 using the user name and password, next to the
+    access and refresh token, the Office 365 CLI will store the user credentials
+    so that it can automatically re-authenticate if necessary. Similarly to the
+    tokens, the credentials are removed by re-authenticating using the device
+    code or by calling the ${chalk.blue(commands.LOGOUT)} command.
 
-    When logging in to the Microsoft Graph using a certificate,
-    the Office 365 CLI will store the contents of the certificate so that it can
-    automatically re-authenticate if necessary. The contents of the certificate
-    are removed by re-authenticating using the device code or by calling
+    When logging in to the Office 365 using a certificate, the Office 365 CLI
+    will store the contents of the certificate so that it can automatically
+    re-authenticate if necessary. The contents of the certificate are removed
+    by re-authenticating using the device code or by calling
     the ${chalk.blue(commands.LOGOUT)} command.
 
-    To log in to the Microsoft Graph using a certificate, you will typically
-    create a custom Azure AD application. To use this application
-    with the Office 365 CLI, you will set the ${chalk.grey('OFFICE365CLI_AADAADAPPID')}
+    To log in to Office 365 using a certificate, you will typically create
+    a custom Azure AD application. To use this application with
+    the Office 365 CLI, you will set the ${chalk.grey('OFFICE365CLI_AADAADAPPID')}
     environment variable to the application's ID and the ${chalk.grey('OFFICE365CLI_TENANT')}
     environment variable to the ID of the Azure AD tenant, where you created
     the Azure AD application.
 
   Examples:
   
-    Log in to the Microsoft Graph using the device code
+    Log in to Office 365 using the device code
       ${chalk.grey(config.delimiter)} ${commands.LOGIN}
 
-    Log in to the Microsoft Graph using the device code in debug mode including
-    detailed debug information in the console output
+    Log in to Office 365 using the device code in debug mode including detailed
+    debug information in the console output
       ${chalk.grey(config.delimiter)} ${commands.LOGIN} --debug
 
-    Log in to the Microsoft Graph using a user name and password
+    Log in to Office 365 using a user name and password
       ${chalk.grey(config.delimiter)} ${commands.LOGIN} --authType password --userName user@contoso.com --password pass@word1
 
-    Log in to the Microsoft Graph using a certificate
+    Log in to Office 365 using a certificate
       ${chalk.grey(config.delimiter)} ${commands.LOGIN} --authType certificate --certificateFile /Users/user/dev/localhost.pfx --thumbprint 47C4885736C624E90491F32B98855AA8A7562AF1
 `);
   }

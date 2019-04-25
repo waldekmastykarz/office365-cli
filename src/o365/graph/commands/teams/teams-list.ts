@@ -8,7 +8,6 @@ import {
 import { Team } from './Team';
 import { GraphItemsListCommand } from '../GraphItemsListCommand';
 import request from '../../../../request';
-import Utils from '../../../../Utils';
 
 const vorpal: Vorpal = require('../../../../vorpal-init');
 

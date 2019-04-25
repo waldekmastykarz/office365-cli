@@ -1,5 +1,4 @@
-import Command, { CommandAction, CommandError } from '../../Command';
-import auth from '../../Auth';
+import Command from '../../Command';
 
 export default abstract class GraphCommand extends Command {
   protected get resource(): string {

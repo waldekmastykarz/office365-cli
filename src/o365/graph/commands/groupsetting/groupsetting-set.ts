@@ -1,4 +1,3 @@
-import auth from '../../GraphAuth';
 import config from '../../../../config';
 import commands from '../../commands';
 import request from '../../../../request';
@@ -34,29 +33,24 @@ class GraphGroupSettingSetCommand extends GraphCommand {
   }
 
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
-    auth
-      .ensureAccessToken(auth.service.resource, cmd, this.debug)
-      .then((): Promise<GroupSetting> => {
-        if (this.verbose) {
-          cmd.log(`Retrieving group setting with id '${args.options.id}'...`);
-        }
+    if (this.verbose) {
+      cmd.log(`Retrieving group setting with id '${args.options.id}'...`);
+    }
 
-        const requestOptions: any = {
-          url: `${auth.service.resource}/v1.0/groupSettings/${args.options.id}`,
-          headers: {
-            authorization: `Bearer ${auth.service.accessToken}`,
-            accept: 'application/json;odata.metadata=none'
-          },
-          json: true
-        };
+    const requestOptions: any = {
+      url: `${this.resource}/v1.0/groupSettings/${args.options.id}`,
+      headers: {
+        accept: 'application/json;odata.metadata=none'
+      },
+      json: true
+    };
 
-        return request.get(requestOptions);
-      })
+    request
+      .get<GroupSetting>(requestOptions)
       .then((groupSetting: GroupSetting): Promise<{}> => {
         const requestOptions: any = {
-          url: `${auth.service.resource}/v1.0/groupSettings/${args.options.id}`,
+          url: `${this.resource}/v1.0/groupSettings/${args.options.id}`,
           headers: {
-            authorization: `Bearer ${auth.service.accessToken}`,
             accept: 'application/json;odata.metadata=none',
             'content-type': 'application/json'
           },
@@ -70,7 +64,7 @@ class GraphGroupSettingSetCommand extends GraphCommand {
 
         return request.patch(requestOptions);
       })
-      .then((res: any): void => {
+      .then((): void => {
         if (this.verbose) {
           cmd.log(vorpal.chalk.green('DONE'));
         }
@@ -139,13 +133,7 @@ class GraphGroupSettingSetCommand extends GraphCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to the Microsoft Graph
-    using the ${chalk.blue(commands.LOGIN)} command.
-        
-  Remarks:
-
-    To update a group setting, you have to first log in to the Microsoft Graph
-    using the ${chalk.blue(commands.LOGIN)} command, eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN}`)}.
+      `  Remarks:
 
     To update a group setting, you have to specify the ID of the group setting.
     You can retrieve the ID of the group setting using the

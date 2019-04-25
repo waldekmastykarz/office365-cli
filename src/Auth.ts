@@ -325,7 +325,7 @@ export class Auth {
         })
     });
   }
-
+  
   public storeConnectionInfo(): Promise<void> {
     const tokenStorage = this.getTokenStorage();
     return tokenStorage.set(JSON.stringify(this.service));

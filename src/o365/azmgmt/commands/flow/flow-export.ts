@@ -1,4 +1,3 @@
-import auth from '../../AzmgmtAuth';
 import config from '../../../../config';
 import commands from '../../commands';
 import GlobalOptions from '../../../../GlobalOptions';
@@ -51,58 +50,47 @@ class AzmgmtFlowExportCommand extends AzmgmtCommand {
   }
 
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
-    let accessToken: string = '';
     let filenameFromApi = '';
     const formatArgument = args.options.format ? args.options.format.toLowerCase() : '';
 
-    auth
-      .ensureAccessToken(auth.service.resource, cmd, this.debug)
-      .then((retrievedAccessToken: string): Promise<void> => {
+    if (this.verbose) {
+      cmd.log(`Retrieving package resources for Microsoft Flow ${args.options.id}...`);
+    }
+
+    ((): Promise<any> => {
+      if (formatArgument === 'json') {
         if (this.debug) {
-          cmd.log(`Retrieved access token ${retrievedAccessToken}.`);
+          cmd.log('format = json, skipping listing package resources step');
         }
 
-        if (this.verbose) {
-          cmd.log(`Retrieving package resources for Microsoft Flow ${args.options.id}...`);
-        }
+        return Promise.resolve();
+      }
 
-        accessToken = retrievedAccessToken;
+      const requestOptions: any = {
+        url: `${this.resource}providers/Microsoft.BusinessAppPlatform/environments/${encodeURIComponent(args.options.environment)}/listPackageResources?api-version=2016-11-01`,
+        headers: {
+          accept: 'application/json'
+        },
+        body: {
+          "baseResourceIds": [
+            `/providers/Microsoft.Flow/flows/${args.options.id}`
+          ]
+        },
+        json: true
+      };
 
-        if (formatArgument === 'json') {
-          if (this.debug) {
-            cmd.log('format = json, skipping listing package resources step');
-          }
-
-          return Promise.resolve();
-        }
-
-        const requestOptions: any = {
-          url: `${auth.service.resource}providers/Microsoft.BusinessAppPlatform/environments/${encodeURIComponent(args.options.environment)}/listPackageResources?api-version=2016-11-01`,
-          headers: {
-            authorization: `Bearer ${accessToken}`,
-            accept: 'application/json'
-          },
-          body: {
-            "baseResourceIds": [
-              `/providers/Microsoft.Flow/flows/${args.options.id}`
-            ]
-          },
-          json: true
-        };
-
-        return request.post(requestOptions);
-      })
+      return request.post(requestOptions);
+    })()
       .then((res: any): Promise<{}> => {
         if (this.verbose) {
           cmd.log(`Initiating package export for Microsoft Flow ${args.options.id}...`);
         }
 
         const requestOptions: any = {
-          url: `${auth.service.resource}providers/${formatArgument === 'json' ?
+          url: `${this.resource}providers/${formatArgument === 'json' ?
             `Microsoft.ProcessSimple/environments/${encodeURIComponent(args.options.environment)}/flows/${encodeURIComponent(args.options.id)}?api-version=2016-11-01`
             : `Microsoft.BusinessAppPlatform/environments/${encodeURIComponent(args.options.environment)}/exportPackage?api-version=2016-11-01`}`,
           headers: {
-            authorization: `Bearer ${accessToken}`,
             accept: 'application/json'
           },
           json: true
@@ -145,11 +133,10 @@ class AzmgmtFlowExportCommand extends AzmgmtCommand {
 
         const requestOptions: any = {
           url: formatArgument === 'json' ?
-            `${auth.service.resource}/providers/Microsoft.ProcessSimple/environments/${encodeURIComponent(args.options.environment)}/flows/${encodeURIComponent(args.options.id)}/exportToARMTemplate?api-version=2016-11-01`
+            `${this.resource}/providers/Microsoft.ProcessSimple/environments/${encodeURIComponent(args.options.environment)}/flows/${encodeURIComponent(args.options.id)}/exportToARMTemplate?api-version=2016-11-01`
             : downloadFileUrl,
           encoding: null, // Set encoding to null, otherwise binary data will be encoded to utf8 and binary data is corrupt 
           headers: formatArgument === 'json' ? {
-            authorization: `Bearer ${accessToken}`,
             accept: 'application/json'
           } : {},
         };
@@ -267,18 +254,12 @@ class AzmgmtFlowExportCommand extends AzmgmtCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(commands.FLOW_EXPORT).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to the Azure Management Service,
-    using the ${chalk.blue(commands.LOGIN)} command.
-
-  Remarks:
+      `  Remarks:
 
     ${chalk.yellow('Attention:')} This command is based on an API that is currently
     in preview and is subject to change once the API reached general
     availability.
   
-    To export the specified Microsoft Flow, you have to first log in to the Azure 
-    Management Service using the ${chalk.blue(commands.LOGIN)} command.
-
     If the environment with the name you specified doesn't exist, you will get
     the ${chalk.grey('Access to the environment \'xyz\' is denied.')} error.
 

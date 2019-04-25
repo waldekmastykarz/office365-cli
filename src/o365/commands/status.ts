@@ -39,7 +39,7 @@ class StatusCommand extends Command {
         }
         else {
           if (this.verbose) {
-            cmd.log('Logged out from Microsoft Graph');
+            cmd.log('Logged out from Office 365');
           }
           else {
             cmd.log('Logged out');
@@ -57,14 +57,14 @@ class StatusCommand extends Command {
     log(
       `  Remarks:
 
-    If you are logged in to the Microsoft Graph, the ${chalk.blue(commands.STATUS)} command
+    If you are logged in to Office 365, the ${chalk.blue(commands.STATUS)} command
     will show you information about the currently stored refresh and access
     token and the expiration date and time of the access token when run in debug
     mode.
 
   Examples:
   
-    Show the information about the current login to the Microsoft Graph
+    Show the information about the current login to Office 365
       ${chalk.grey(config.delimiter)} ${commands.STATUS}
 `);
   }

@@ -1,13 +1,11 @@
 import commands from '../../commands';
 import Command, { CommandOption, CommandValidate, CommandError } from '../../../../Command';
 import * as sinon from 'sinon';
-import appInsights from '../../../../appInsights';
-import auth from '../../GraphAuth';
+import auth from '../../../../Auth';
 const command: Command = require('./groupsetting-remove');
 import * as assert from 'assert';
 import request from '../../../../request';
 import Utils from '../../../../Utils';
-import { Service } from '../../../../Auth';
 import * as fs from 'fs';
 
 describe(commands.GROUPSETTING_REMOVE, () => {
@@ -15,16 +13,11 @@ describe(commands.GROUPSETTING_REMOVE, () => {
   let log: string[];
   let cmdInstance: any;
   let cmdInstanceLogSpy: sinon.SinonSpy;
-  let trackEvent: any;
-  let telemetry: any;
   let promptOptions: any;
 
   before(() => {
     sinon.stub(auth, 'restoreAuth').callsFake(() => Promise.resolve());
-    sinon.stub(auth, 'ensureAccessToken').callsFake(() => { return Promise.resolve('ABC'); });
-    trackEvent = sinon.stub(appInsights, 'trackEvent').callsFake((t) => {
-      telemetry = t;
-    });
+    auth.service.connected = true;
     sinon.stub(fs, 'readFileSync').callsFake(() => 'abc');
   });
 
@@ -32,6 +25,7 @@ describe(commands.GROUPSETTING_REMOVE, () => {
     vorpal = require('../../../../vorpal-init');
     log = [];
     cmdInstance = {
+      action: command.action(),
       log: (msg: string) => {
         log.push(msg);
       },
@@ -41,8 +35,6 @@ describe(commands.GROUPSETTING_REMOVE, () => {
       }
     };
     cmdInstanceLogSpy = sinon.spy(cmdInstance, 'log');
-    auth.service = new Service('https://graph.microsoft.com');
-    telemetry = null;
     promptOptions = undefined;
   });
 
@@ -56,11 +48,10 @@ describe(commands.GROUPSETTING_REMOVE, () => {
 
   after(() => {
     Utils.restore([
-      appInsights.trackEvent,
-      auth.ensureAccessToken,
       auth.restoreAuth,
       fs.readFileSync
     ]);
+    auth.service.connected = false;
   });
 
   it('has correct name', () => {
@@ -69,47 +60,6 @@ describe(commands.GROUPSETTING_REMOVE, () => {
 
   it('has a description', () => {
     assert.notEqual(command.description, null);
-  });
-
-  it('calls telemetry', (done) => {
-    cmdInstance.action = command.action();
-    cmdInstance.action({ options: {} }, () => {
-      try {
-        assert(trackEvent.called);
-        done();
-      }
-      catch (e) {
-        done(e);
-      }
-    });
-  });
-
-  it('logs correct telemetry event', (done) => {
-    cmdInstance.action = command.action();
-    cmdInstance.action({ options: {} }, () => {
-      try {
-        assert.equal(telemetry.name, commands.GROUPSETTING_REMOVE);
-        done();
-      }
-      catch (e) {
-        done(e);
-      }
-    });
-  });
-
-  it('aborts when not logged in to Microsoft Graph', (done) => {
-    auth.service = new Service();
-    auth.service.connected = false;
-    cmdInstance.action = command.action();
-    cmdInstance.action({ options: { debug: true } }, (err?: any) => {
-      try {
-        assert.equal(JSON.stringify(err), JSON.stringify(new CommandError('Log in to the Microsoft Graph first')));
-        done();
-      }
-      catch (e) {
-        done(e);
-      }
-    });
   });
 
   it('removes the specified group setting without prompting for confirmation when confirm option specified', (done) => {
@@ -121,9 +71,6 @@ describe(commands.GROUPSETTING_REMOVE, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.service = new Service('https://graph.microsoft.com');
-    auth.service.connected = true;
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: false, id: '28beab62-7540-4db1-a23f-29a6018a3848', confirm: false } }, () => {
       try {
         assert(cmdInstanceLogSpy.notCalled);
@@ -144,9 +91,6 @@ describe(commands.GROUPSETTING_REMOVE, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.service = new Service('https://graph.microsoft.com');
-    auth.service.connected = true;
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: true, id: '28beab62-7540-4db1-a23f-29a6018a3848', confirm: false } }, () => {
       try {
         assert(cmdInstanceLogSpy.notCalled);
@@ -159,10 +103,6 @@ describe(commands.GROUPSETTING_REMOVE, () => {
   });
 
   it('prompts before removing the specified group setting when confirm option not passed', (done) => {
-    auth.service = new Service('https://graph.microsoft.com');
-    auth.service.connected = true;
-
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: false, id: '28beab62-7540-4db1-a23f-29a6018a3848' } }, () => {
       let promptIssued = false;
 
@@ -181,10 +121,6 @@ describe(commands.GROUPSETTING_REMOVE, () => {
   });
 
   it('prompts before removing the specified group setting when confirm option not passed (debug)', (done) => {
-    auth.service = new Service('https://graph.microsoft.com');
-    auth.service.connected = true;
-
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: true, id: '28beab62-7540-4db1-a23f-29a6018a3848' } }, () => {
       let promptIssued = false;
 
@@ -204,10 +140,7 @@ describe(commands.GROUPSETTING_REMOVE, () => {
 
   it('aborts removing the group setting when prompt not confirmed', (done) => {
     const postSpy = sinon.spy(request, 'delete');
-    auth.service = new Service('https://graph.microsoft.com');
-    auth.service.connected = true;
 
-    cmdInstance.action = command.action();
     cmdInstance.prompt = (options: any, cb: (result: { continue: boolean }) => void) => {
       cb({ continue: false });
     };
@@ -224,10 +157,6 @@ describe(commands.GROUPSETTING_REMOVE, () => {
 
   it('aborts removing the group setting when prompt not confirmed (debug)', (done) => {
     const postSpy = sinon.spy(request, 'delete');
-    auth.service = new Service('https://graph.microsoft.com');
-    auth.service.connected = true;
-
-    cmdInstance.action = command.action();
     cmdInstance.prompt = (options: any, cb: (result: { continue: boolean }) => void) => {
       cb({ continue: false });
     };
@@ -244,10 +173,6 @@ describe(commands.GROUPSETTING_REMOVE, () => {
 
   it('removes the group setting when prompt confirmed', (done) => {
     const postStub = sinon.stub(request, 'delete').callsFake(() => Promise.resolve());
-    auth.service = new Service('https://graph.microsoft.com');
-    auth.service.connected = true;
-    
-    cmdInstance.action = command.action();
     cmdInstance.prompt = (options: any, cb: (result: { continue: boolean }) => void) => {
       cb({ continue: true });
     };
@@ -264,10 +189,6 @@ describe(commands.GROUPSETTING_REMOVE, () => {
 
   it('removes the group setting when prompt confirmed (debug)', (done) => {
     const postStub = sinon.stub(request, 'delete').callsFake(() => Promise.resolve());
-    auth.service = new Service('https://graph.microsoft.com');
-    auth.service.connected = true;
-    
-    cmdInstance.action = command.action();
     cmdInstance.prompt = (options: any, cb: (result: { continue: boolean }) => void) => {
       cb({ continue: true });
     };
@@ -287,10 +208,6 @@ describe(commands.GROUPSETTING_REMOVE, () => {
       return Promise.reject({ error: { 'odata.error': { message: { value: 'File Not Found.' } } } });
     });
 
-    auth.service = new Service('https://graph.microsoft.com');
-    auth.service.connected = true;
-
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: false, confirm: true, id: '28beab62-7540-4db1-a23f-29a6018a3848' } }, (err?: any) => {
       try {
         assert.equal(JSON.stringify(err), JSON.stringify(new CommandError('File Not Found.')));
@@ -382,22 +299,5 @@ describe(commands.GROUPSETTING_REMOVE, () => {
     });
     Utils.restore(vorpal.find);
     assert(containsExamples);
-  });
-
-  it('correctly handles lack of valid access token', (done) => {
-    Utils.restore(auth.ensureAccessToken);
-    sinon.stub(auth, 'ensureAccessToken').callsFake(() => { return Promise.reject(new Error('Error getting access token')); });
-    auth.service = new Service('https://graph.microsoft.com');
-    auth.service.connected = true;
-    cmdInstance.action = command.action();
-    cmdInstance.action({ options: { debug: true, confirm: true } }, (err?: any) => {
-      try {
-        assert.equal(JSON.stringify(err), JSON.stringify(new CommandError('Error getting access token')));
-        done();
-      }
-      catch (e) {
-        done(e);
-      }
-    });
   });
 });

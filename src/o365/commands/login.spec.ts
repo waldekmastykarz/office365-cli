@@ -1,13 +1,12 @@
-import commands from '../commands';
-import Command, { CommandCancel, CommandError, CommandOption, CommandValidate } from '../../../Command';
+import commands from './commands';
+import Command, { CommandCancel, CommandError, CommandOption, CommandValidate } from '../../Command';
 import * as sinon from 'sinon';
-import appInsights from '../../../appInsights';
-import auth from '../GraphAuth';
+import auth from '../../Auth';
 const command: Command = require('./login');
 import * as assert from 'assert';
 import * as request from 'request-promise-native';
-import Utils from '../../../Utils';
-import { Service, AuthType } from '../../../Auth';
+import Utils from '../../Utils';
+import { Service, AuthType } from '../../Auth';
 import * as fs from 'fs';
 
 describe(commands.LOGIN, () => {
@@ -15,17 +14,12 @@ describe(commands.LOGIN, () => {
   let log: string[];
   let cmdInstance: any;
   let cmdInstanceLogSpy: sinon.SinonSpy;
-  let trackEvent: any;
-  let telemetry: any;
 
   before(() => {
     sinon.stub(auth, 'restoreAuth').callsFake(() => Promise.resolve());
     sinon.stub(auth, 'ensureAccessToken').callsFake(() => { return Promise.resolve('ABC'); });
     sinon.stub(auth, 'clearConnectionInfo').callsFake(() => Promise.resolve());
     sinon.stub(auth, 'storeConnectionInfo').callsFake(() => Promise.resolve());
-    trackEvent = sinon.stub(appInsights, 'trackEvent').callsFake((t) => {
-      telemetry = t;
-    });
   });
 
   beforeEach(() => {
