@@ -1,4 +1,3 @@
-import auth from '../../GraphAuth';
 import config from '../../../../config';
 import commands from '../../commands';
 import GlobalOptions from '../../../../GlobalOptions';
@@ -37,9 +36,9 @@ class GraphGroupSettingTemplateGetCommand extends GraphItemsListCommand<GroupSet
     return telemetryProps;
   }
 
-  public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
+  public commandAction(cmd: CommandInstance, args: CommandArgs, cb: (err?: any) => void): void {
     this
-      .getAllItems(`${auth.service.resource}/v1.0/groupSettingTemplates`, cmd, true)
+      .getAllItems(`${this.resource}/v1.0/groupSettingTemplates`, cmd, true)
       .then((): void => {
         const groupSettingTemplate: GroupSettingTemplate[] = this.items.filter(t => args.options.id ? t.id === args.options.id : t.displayName === args.options.displayName);
 
@@ -47,7 +46,8 @@ class GraphGroupSettingTemplateGetCommand extends GraphItemsListCommand<GroupSet
           cmd.log(groupSettingTemplate.pop());
         }
         else {
-          cmd.log(new CommandError(`Resource '${(args.options.id || args.options.displayName)}' does not exist.`))
+          cb(new CommandError(`Resource '${(args.options.id || args.options.displayName)}' does not exist.`));
+          return;
         }
 
         if (this.verbose) {
@@ -97,16 +97,7 @@ class GraphGroupSettingTemplateGetCommand extends GraphItemsListCommand<GroupSet
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to the Microsoft Graph
-    using the ${chalk.blue(commands.LOGIN)} command.
-        
-  Remarks:
-
-    To get information about a group setting template, you have to first log in
-    to the Microsoft Graph using the ${chalk.blue(commands.LOGIN)} command,
-    eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN}`)}.
-
-  Examples:
+      `  Examples:
   
     Get information about the group setting template with id
     ${chalk.grey('62375ab9-6b52-47ed-826b-58e47e0e304b')}

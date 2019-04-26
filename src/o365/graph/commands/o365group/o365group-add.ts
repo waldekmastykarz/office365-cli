@@ -1,4 +1,3 @@
-import auth from '../../GraphAuth';
 import config from '../../../../config';
 import commands from '../../commands';
 import GlobalOptions from '../../../../GlobalOptions';
@@ -42,39 +41,31 @@ class GraphO365GroupAddCommand extends GraphCommand {
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
     let group: Group;
 
-    auth
-      .ensureAccessToken(auth.service.resource, cmd, this.debug)
-      .then((accessToken: string): Promise<Group> => {
-        if (this.debug) {
-          cmd.log(`Retrieved access token ${accessToken}.`);
-        }
+    if (this.verbose) {
+      cmd.log(`Creating Office 365 Group...`);
+    }
 
-        if (this.verbose) {
-          cmd.log(`Creating Office 365 Group...`);
-        }
+    const requestOptions: any = {
+      url: `${this.resource}/v1.0/groups`,
+      headers: {
+        'accept': 'application/json;odata.metadata=none'
+      },
+      json: true,
+      body: {
+        description: args.options.description,
+        displayName: args.options.displayName,
+        groupTypes: [
+          "Unified"
+        ],
+        mailEnabled: true,
+        mailNickname: args.options.mailNickname,
+        securityEnabled: false,
+        visibility: args.options.isPrivate == 'true' ? 'Private' : 'Public'
+      }
+    };
 
-        const requestOptions: any = {
-          url: `${auth.service.resource}/v1.0/groups`,
-          headers: {
-            authorization: `Bearer ${accessToken}`,
-            'accept': 'application/json;odata.metadata=none'
-          },
-          json: true,
-          body: {
-            description: args.options.description,
-            displayName: args.options.displayName,
-            groupTypes: [
-              "Unified"
-            ],
-            mailEnabled: true,
-            mailNickname: args.options.mailNickname,
-            securityEnabled: false,
-            visibility: args.options.isPrivate == 'true' ? 'Private' : 'Public'
-          }
-        };
-
-        return request.post(requestOptions);
-      })
+    request
+      .post<Group>(requestOptions)
       .then((res: Group): Promise<void> => {
         group = res;
 
@@ -92,9 +83,8 @@ class GraphO365GroupAddCommand extends GraphCommand {
         }
 
         const requestOptions: any = {
-          url: `${auth.service.resource}/v1.0/groups/${group.id}/photo/$value`,
+          url: `${this.resource}/v1.0/groups/${group.id}/photo/$value`,
           headers: {
-            authorization: `Bearer ${auth.service.accessToken}`,
             'content-type': this.getImageContentType(fullPath)
           },
           body: fs.readFileSync(fullPath)
@@ -120,9 +110,8 @@ class GraphO365GroupAddCommand extends GraphCommand {
         }
 
         const requestOptions: any = {
-          url: `${auth.service.resource}/v1.0/users?$filter=${owners.map(o => `userPrincipalName eq '${o}'`).join(' or ')}&$select=id`,
+          url: `${this.resource}/v1.0/users?$filter=${owners.map(o => `userPrincipalName eq '${o}'`).join(' or ')}&$select=id`,
           headers: {
-            authorization: `Bearer ${auth.service.accessToken}`,
             'content-type': 'application/json'
           },
           json: true
@@ -136,9 +125,8 @@ class GraphO365GroupAddCommand extends GraphCommand {
         }
 
         return Promise.all(res.value.map(u => request.post({
-          url: `${auth.service.resource}/v1.0/groups/${group.id}/owners/$ref`,
+          url: `${this.resource}/v1.0/groups/${group.id}/owners/$ref`,
           headers: {
-            authorization: `Bearer ${auth.service.accessToken}`,
             'content-type': 'application/json'
           },
           json: true,
@@ -163,9 +151,8 @@ class GraphO365GroupAddCommand extends GraphCommand {
         }
 
         const requestOptions: any = {
-          url: `${auth.service.resource}/v1.0/users?$filter=${members.map(o => `userPrincipalName eq '${o}'`).join(' or ')}&$select=id`,
+          url: `${this.resource}/v1.0/users?$filter=${members.map(o => `userPrincipalName eq '${o}'`).join(' or ')}&$select=id`,
           headers: {
-            authorization: `Bearer ${auth.service.accessToken}`,
             'content-type': 'application/json'
           },
           json: true
@@ -179,9 +166,8 @@ class GraphO365GroupAddCommand extends GraphCommand {
         }
 
         return Promise.all(res.value.map(u => request.post({
-          url: `${auth.service.resource}/v1.0/groups/${group.id}/members/$ref`,
+          url: `${this.resource}/v1.0/groups/${group.id}/members/$ref`,
           headers: {
-            authorization: `Bearer ${auth.service.accessToken}`,
             'content-type': 'application/json'
           },
           json: true,
@@ -325,14 +311,8 @@ class GraphO365GroupAddCommand extends GraphCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to the Microsoft Graph,
-    using the ${chalk.blue(commands.LOGIN)} command.
-
-  Remarks:
+      `  Remarks:
   
-    To create an Office 365 Group, you have to first log in to the Microsoft
-    Graph using the ${chalk.blue(commands.LOGIN)} command.
-
     When specifying the path to the logo image you can use both relative and
     absolute paths. Note, that ~ in the path, will not be resolved and will most
     likely result in an error.

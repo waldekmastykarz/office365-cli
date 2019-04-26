@@ -1,4 +1,3 @@
-import auth from '../../GraphAuth';
 import config from '../../../../config';
 import commands from '../../commands';
 import GlobalOptions from '../../../../GlobalOptions';
@@ -38,27 +37,19 @@ class GraphO365GroupRemoveCommand extends GraphCommand {
 
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
     const removeGroup: () => void = (): void => {
-      auth
-        .ensureAccessToken(auth.service.resource, cmd, this.debug)
-        .then((accessToken: string): Promise<void> => {
-          if (this.debug) {
-            cmd.log(`Retrieved access token ${accessToken}.`);
-          }
+      if (this.verbose) {
+        cmd.log(`Removing Office 365 Group: ${args.options.id}...`);
+      }
 
-          if (this.verbose) {
-            cmd.log(`Removing Office 365 Group: ${args.options.id}...`);
-          }
+      const requestOptions: any = {
+        url: `${this.resource}/v1.0/groups/${args.options.id}`,
+        headers: {
+          'accept': 'application/json;odata.metadata=none'
+        },
+      };
 
-          const requestOptions: any = {
-            url: `${auth.service.resource}/v1.0/groups/${args.options.id}`,
-            headers: {
-              authorization: `Bearer ${accessToken}`,
-              'accept': 'application/json;odata.metadata=none'
-            },
-          };
-
-          return request.delete(requestOptions);
-        })
+      request
+        .delete(requestOptions)
         .then((): void => {
           if (this.verbose) {
             cmd.log(vorpal.chalk.green('DONE'));
@@ -121,14 +112,8 @@ class GraphO365GroupRemoveCommand extends GraphCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to the Microsoft Graph,
-    using the ${chalk.blue(commands.LOGIN)} command.
-
-  Remarks:
+      `  Remarks:
   
-    To remove an Office 365 Group, you have to first log in to the Microsoft
-    Graph using the ${chalk.blue(commands.LOGIN)} command.
-
     If the specified ${chalk.grey('id')} doesn't refer to an existing group, you will get
     a ${chalk.grey('Resource does not exist')} error.
 

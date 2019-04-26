@@ -1,4 +1,3 @@
-import auth from '../../GraphAuth';
 import config from '../../../../config';
 import commands from '../../commands';
 import GlobalOptions from '../../../../GlobalOptions';
@@ -22,7 +21,7 @@ class GraphGroupSettingTemplateListCommand extends GraphItemsListCommand<GroupSe
 
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
     this
-      .getAllItems(`${auth.service.resource}/v1.0/groupSettingTemplates`, cmd, true)
+      .getAllItems(`${this.resource}/v1.0/groupSettingTemplates`, cmd, true)
       .then((): void => {
         if (args.options.output === 'json') {
           cmd.log(this.items);
@@ -48,16 +47,7 @@ class GraphGroupSettingTemplateListCommand extends GraphItemsListCommand<GroupSe
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to the Microsoft Graph
-    using the ${chalk.blue(commands.LOGIN)} command.
-        
-  Remarks:
-
-    To list group setting templates, you have to first log in to
-    the Microsoft Graph using the ${chalk.blue(commands.LOGIN)} command,
-    eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN}`)}.
-
-  Examples:
+      `  Examples:
   
     List all group setting templates in the tenant
       ${chalk.grey(config.delimiter)} ${this.name}
