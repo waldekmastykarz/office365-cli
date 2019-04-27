@@ -1,4 +1,3 @@
-import auth from '../../GraphAuth';
 import config from '../../../../config';
 import commands from '../../commands';
 import GlobalOptions from '../../../../GlobalOptions';
@@ -30,7 +29,7 @@ class GraphTeamsMessageListCommand extends GraphItemsListCommand<Message> {
   }
 
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
-    const endpoint: string = `${auth.service.resource}/beta/teams/${args.options.teamId}/channels/${args.options.channelId}/messages`;
+    const endpoint: string = `${this.resource}/beta/teams/${args.options.teamId}/channels/${args.options.channelId}/messages`;
 
     this
     .getAllItems(endpoint, cmd, true)
@@ -97,18 +96,11 @@ class GraphTeamsMessageListCommand extends GraphItemsListCommand<Message> {
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to the Microsoft Graph
-    using the ${chalk.blue(commands.LOGIN)} command.
-          
-  Remarks:
+      `  Remarks:
 
     ${chalk.yellow('Attention:')} This command is based on an API that is currently
     in preview and is subject to change once the API reached general
     availability.
-
-    To lists all the messages from a Microsoft Teams channel, you have to first log
-    in to the Microsoft Graph using the ${chalk.blue(commands.LOGIN)} command,
-    eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN}`)}.
 
     You can list all the messages from a Microsoft Teams team if you are
     a member of that team.

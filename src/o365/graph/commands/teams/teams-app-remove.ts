@@ -1,5 +1,4 @@
 import request from '../../../../request';
-import auth from '../../GraphAuth';
 import Utils from '../../../../Utils';
 import config from '../../../../config';
 import commands from '../../commands';
@@ -37,19 +36,16 @@ class GraphTeamsAppRemoveCommand extends GraphCommand {
     const { id: appId } = args.options;
 
     const removeApp: () => void = (): void => {
-      auth.ensureAccessToken(auth.service.resource, cmd, this.debug)
-        .then((): Promise<string> => {
-          const requestOptions: any = {
-            url: `${auth.service.resource}/v1.0/appCatalogs/teamsApps/${appId}`,
-            headers: {
-              authorization: `Bearer ${auth.service.accessToken}`,
-              accept: 'application/json;odata.metadata=none'
-            }
-          };
+      const requestOptions: any = {
+        url: `${this.resource}/v1.0/appCatalogs/teamsApps/${appId}`,
+        headers: {
+          accept: 'application/json;odata.metadata=none'
+        }
+      };
 
-          return request.delete(requestOptions);
-        })
-        .then((res: string): void => {
+      request
+        .delete(requestOptions)
+        .then((): void => {
           if (this.verbose) {
             cmd.log(vorpal.chalk.green('DONE'));
           }
@@ -57,7 +53,6 @@ class GraphTeamsAppRemoveCommand extends GraphCommand {
           cb();
         }, (res: any): void => this.handleRejectedODataJsonPromise(res, cmd, cb));
     };
-
 
     if (args.options.confirm) {
       removeApp();
@@ -113,14 +108,7 @@ class GraphTeamsAppRemoveCommand extends GraphCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to the Microsoft Graph
-    using the ${chalk.blue(commands.LOGIN)} command.
-        
-  Remarks:
-
-    To remove Microsoft Teams apps, you have to first log in to
-    the Microsoft Graph using the ${chalk.blue(commands.LOGIN)} command,
-    eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN}`)}.
+      `  Remarks:
 
     You can only remove a Teams app as a global administrator.
 

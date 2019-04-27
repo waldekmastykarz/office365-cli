@@ -1,5 +1,4 @@
 import request from '../../../../request';
-import auth from '../../GraphAuth';
 import Utils from '../../../../Utils';
 import config from '../../../../config';
 import commands from '../../commands';
@@ -28,27 +27,23 @@ class GraphTeamsAppInstallCommand extends GraphCommand {
   }
 
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
-    const endpoint: string = `${auth.service.resource}/v1.0`
+    const endpoint: string = `${this.resource}/v1.0`
 
-    auth
-      .ensureAccessToken(auth.service.resource, cmd, this.debug)
-      .then((): Promise<{}> => {
-        const requestOptions: any = {
-          url: `${endpoint}/teams/${args.options.teamId}/installedApps`,
-          headers: {
-            authorization: `Bearer ${auth.service.accessToken}`,
-            'content-type': 'application/json;odata=nometadata',
-            'accept': 'application/json;odata.metadata=none'
-          },
-          json: true,
-          body: {
-            'teamsApp@odata.bind': `${endpoint}/appCatalogs/teamsApps/${args.options.appId}`
-          }
-        };
+    const requestOptions: any = {
+      url: `${endpoint}/teams/${args.options.teamId}/installedApps`,
+      headers: {
+        'content-type': 'application/json;odata=nometadata',
+        'accept': 'application/json;odata.metadata=none'
+      },
+      json: true,
+      body: {
+        'teamsApp@odata.bind': `${endpoint}/appCatalogs/teamsApps/${args.options.appId}`
+      }
+    };
 
-        return request.post(requestOptions);
-      })
-      .then((res: any): void => {
+    request
+      .post(requestOptions)
+      .then((): void => {
         if (this.verbose) {
           cmd.log(vorpal.chalk.green('DONE'));
         }
@@ -99,14 +94,7 @@ class GraphTeamsAppInstallCommand extends GraphCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to the Microsoft Graph
-    using the ${chalk.blue(commands.LOGIN)} command.
-        
-  Remarks:
-
-    To install an app to a Microsoft Teams team, you have to first log in to
-    the Microsoft Graph using the ${chalk.blue(commands.LOGIN)} command,
-    eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN}`)}.
+      `  Remarks:
 
     The ${chalk.grey(`appId`)} has to be the ID of the app from the Microsoft Teams App Catalog.
     Do not use the ID from the manifest of the zip app package.

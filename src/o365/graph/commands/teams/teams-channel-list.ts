@@ -1,4 +1,3 @@
-import auth from '../../GraphAuth';
 import config from '../../../../config';
 import commands from '../../commands';
 import GlobalOptions from '../../../../GlobalOptions';
@@ -29,7 +28,7 @@ class GraphTeamsChannelListCommand extends GraphItemsListCommand<Channel>{
   }
 
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
-    const endpoint: string = `${auth.service.resource}/v1.0/teams/${args.options.teamId}/channels`;
+    const endpoint: string = `${this.resource}/v1.0/teams/${args.options.teamId}/channels`;
     
     this
       .getAllItems(endpoint, cmd, true)
@@ -82,16 +81,7 @@ class GraphTeamsChannelListCommand extends GraphItemsListCommand<Channel>{
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to the Microsoft Graph
-    using the ${chalk.blue(commands.LOGIN)} command.
-          
-  Remarks:
-
-    To list the channels in a Microsoft Teams team, you have to first log in to
-    the Microsoft Graph using the ${chalk.blue(commands.LOGIN)} command,
-    eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN}`)}.
-
-  Examples:
+      `  Examples:
   
     List the channels in a specified Microsoft Teams team
       ${chalk.grey(config.delimiter)} ${this.name} --teamId 00000000-0000-0000-0000-000000000000

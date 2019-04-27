@@ -1,4 +1,3 @@
-import auth from '../../GraphAuth';
 import config from '../../../../config';
 import commands from '../../commands';
 import GlobalOptions from '../../../../GlobalOptions';
@@ -37,30 +36,28 @@ class GraphTeamsChannelAddCommand extends GraphCommand {
   }
 
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
-    auth
-      .ensureAccessToken(auth.service.resource, cmd, this.debug)
-      .then((): Promise<{}> => {
-        const requestOptions: any = {
-          url: `${auth.service.resource}/v1.0/teams/${args.options.teamId}/channels`,
-          headers: {
-            authorization: `Bearer ${auth.service.accessToken}`,
-            accept: 'application/json;odata.metadata=none',
-            'content-type': 'application/json;odata=nometadata'
-          },
-          body: {
-            displayName: args.options.name,
-            description: args.options.description || null
-          },
-          json: true
-        };
+    const requestOptions: any = {
+      url: `${this.resource}/v1.0/teams/${args.options.teamId}/channels`,
+      headers: {
+        accept: 'application/json;odata.metadata=none',
+        'content-type': 'application/json;odata=nometadata'
+      },
+      body: {
+        displayName: args.options.name,
+        description: args.options.description || null
+      },
+      json: true
+    };
 
-        return request.post(requestOptions);
-      })
+    request
+      .post(requestOptions)
       .then((res: any): void => {
         cmd.log(res);
+
         if (this.verbose) {
           cmd.log(vorpal.chalk.green('DONE'));
         }
+
         cb();
       }, (err: any): void => this.handleRejectedODataJsonPromise(err, cmd, cb));
   }
@@ -108,14 +105,7 @@ class GraphTeamsChannelAddCommand extends GraphCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to the Microsoft Graph
-    using the ${chalk.blue(commands.LOGIN)} command.
-          
-  Remarks:
-
-    To add a channel top Microsoft Teams team, you have to first log in to
-    the Microsoft Graph using the ${chalk.blue(commands.LOGIN)} command,
-    eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN}`)}.
+      `  Remarks:
 
     You can only add a channel to the Microsoft Teams team you are a member of.
 

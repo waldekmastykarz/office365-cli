@@ -1,4 +1,3 @@
-import auth from '../../GraphAuth';
 import config from '../../../../config';
 import commands from '../../commands';
 import GlobalOptions from '../../../../GlobalOptions';
@@ -38,14 +37,14 @@ class GraphTeamsAppListCommand extends GraphItemsListCommand<TeamsApp> {
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: (err?: any) => void): void {
     let endpoint: string = '';
     if (args.options.teamId) {
-      endpoint = `${auth.service.resource}/v1.0/teams/${encodeURIComponent(args.options.teamId)}/installedApps?$expand=teamsApp`;
+      endpoint = `${this.resource}/v1.0/teams/${encodeURIComponent(args.options.teamId)}/installedApps?$expand=teamsApp`;
 
       if (!args.options.all) {
         endpoint += `&$filter=teamsApp/distributionMethod eq 'organization'`;
       }
     }
     else {
-      endpoint = `${auth.service.resource}/v1.0/appCatalogs/teamsApps`;
+      endpoint = `${this.resource}/v1.0/appCatalogs/teamsApps`;
 
       if (!args.options.all) {
         endpoint += `?$filter=distributionMethod eq 'organization'`;
@@ -118,14 +117,7 @@ class GraphTeamsAppListCommand extends GraphItemsListCommand<TeamsApp> {
     log(vorpal.find(this.name).helpInformation());
 
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to the Microsoft Graph
-    using the ${chalk.blue(commands.LOGIN)} command.
-
-  Remarks:
-
-    To list apps in the Microsoft Teams app catalog or installed
-    in the specified team, you have to first log in to the Microsoft Graph
-    using the ${chalk.blue(commands.LOGIN)} command, eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN}`)}.
+      `  Remarks:
 
     To list apps installed in the specified Microsoft Teams team, specify that
     team's ID using the ${chalk.grey('teamId')} option. If the ${chalk.grey('teamId')} option

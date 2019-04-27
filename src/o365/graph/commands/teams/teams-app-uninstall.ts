@@ -1,5 +1,4 @@
 import request from '../../../../request';
-import auth from '../../GraphAuth';
 import Utils from '../../../../Utils';
 import config from '../../../../config';
 import commands from '../../commands';
@@ -30,19 +29,15 @@ class GraphTeamsAppUninstallCommand extends GraphCommand {
 
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
     const uninstallApp: () => void = (): void => {
-      auth
-        .ensureAccessToken(auth.service.resource, cmd, this.debug)
-        .then((): Promise<{}> => {
-          const requestOptions: any = {
-            url: `${auth.service.resource}/v1.0/teams/${args.options.teamId}/installedApps/${args.options.appId}`,
-            headers: {
-              authorization: `Bearer ${auth.service.accessToken}`,
-              accept: 'application/json;odata.metadata=none'
-            }
-          };
+      const requestOptions: any = {
+        url: `${this.resource}/v1.0/teams/${args.options.teamId}/installedApps/${args.options.appId}`,
+        headers: {
+          accept: 'application/json;odata.metadata=none'
+        }
+      };
 
-          return request.delete(requestOptions);
-        })
+      request
+        .delete(requestOptions)
         .then((): void => {
           if (this.verbose) {
             cmd.log(vorpal.chalk.green('DONE'));
@@ -114,15 +109,8 @@ class GraphTeamsAppUninstallCommand extends GraphCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to the Microsoft Graph
-    using the ${chalk.blue(commands.LOGIN)} command.
-        
-  Remarks:
+      `  Remarks:
 
-    To uninstall an app from a Microsoft Teams team, you have to first log in to
-    the Microsoft Graph using the ${chalk.blue(commands.LOGIN)} command,
-    eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN}`)}.
-    
     The ${chalk.grey(`appId`)} has to be the id the app instance installed in the Microsoft Teams
     team. Do not use the ID from the manifest of the zip app package or the id
     from the Microsoft Teams App Catalog.

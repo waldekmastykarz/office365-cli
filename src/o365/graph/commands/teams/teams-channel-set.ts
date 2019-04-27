@@ -1,4 +1,3 @@
-import auth from '../../GraphAuth';
 import config from '../../../../config';
 import commands from '../../commands';
 import GlobalOptions from '../../../../GlobalOptions';
@@ -39,20 +38,16 @@ class GraphTeamsChannelSetCommand extends GraphCommand {
   }
 
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
-    auth
-      .ensureAccessToken(auth.service.resource, cmd, this.debug)
-      .then((): Promise<{ value: Channel[]; }> => {
-        const requestOptions: any = {
-          url: `${auth.service.resource}/v1.0/teams/${encodeURIComponent(args.options.teamId)}/channels?$filter=displayName eq '${encodeURIComponent(args.options.channelName)}'`,
-          headers: {
-            authorization: `Bearer ${auth.service.accessToken}`,
-            accept: 'application/json;odata.metadata=none'
-          },
-          json: true
-        }
+    const requestOptions: any = {
+      url: `${this.resource}/v1.0/teams/${encodeURIComponent(args.options.teamId)}/channels?$filter=displayName eq '${encodeURIComponent(args.options.channelName)}'`,
+      headers: {
+        accept: 'application/json;odata.metadata=none'
+      },
+      json: true
+    }
 
-        return request.get(requestOptions);
-      })
+    request
+      .get<{ value: Channel[] }>(requestOptions)
       .then((res: { value: Channel[] }): Promise<void> => {
         const channelItem: Channel | undefined = res.value[0];
 
@@ -63,9 +58,8 @@ class GraphTeamsChannelSetCommand extends GraphCommand {
         const channelId: string = res.value[0].id;
         const body: any = this.mapRequestBody(args.options);
         const requestOptions: any = {
-          url: `${auth.service.resource}/v1.0/teams/${encodeURIComponent(args.options.teamId)}/channels/${channelId}`,
+          url: `${this.resource}/v1.0/teams/${encodeURIComponent(args.options.teamId)}/channels/${channelId}`,
           headers: {
-            authorization: `Bearer ${auth.service.accessToken}`,
             'accept': 'application/json;odata.metadata=none'
           },
           json: true,
@@ -146,16 +140,7 @@ class GraphTeamsChannelSetCommand extends GraphCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to the Microsoft Graph
-    using the ${chalk.blue(commands.LOGIN)} command.
-        
-  Remarks:
-
-    To update properties of a specified channel in the given Microsoft Teams
-    team, you have to first log in to the Microsoft Graph
-    using the ${chalk.blue(commands.LOGIN)} command, eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN}`)}.
-
-  Examples:
+      `  Examples:
 
     Set new description and display name for the specified channel in the given
     Microsoft Teams team

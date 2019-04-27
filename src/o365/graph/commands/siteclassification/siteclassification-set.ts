@@ -1,4 +1,3 @@
-import auth from '../../GraphAuth';
 import config from '../../../../config';
 import commands from '../../commands';
 import request from '../../../../request';
@@ -42,20 +41,16 @@ class GraphSiteClassificationUpdateCommand extends GraphCommand {
   }
 
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: (err?: any) => void): void {
-    auth
-      .ensureAccessToken(auth.service.resource, cmd, this.debug)
-      .then((): Promise<{ value: DirectorySetting[]; }> => {
-        const requestOptions: any = {
-          url: `${auth.service.resource}/beta/settings`,
-          headers: {
-            authorization: `Bearer ${auth.service.accessToken}`,
-            accept: 'application/json;odata.metadata=none'
-          },
-          json: true
-        };
+    const requestOptions: any = {
+      url: `${this.resource}/beta/settings`,
+      headers: {
+        accept: 'application/json;odata.metadata=none'
+      },
+      json: true
+    };
 
-        return request.get(requestOptions);
-      })
+    request
+      .get<{ value: DirectorySetting[]; }>(requestOptions)
       .then((res: { value: DirectorySetting[]; }): Promise<void> => {
         const unifiedGroupSetting: DirectorySetting[] = res.value.filter((directorySetting: DirectorySetting): boolean => {
           return directorySetting.displayName === 'Group.Unified';
@@ -136,9 +131,8 @@ class GraphSiteClassificationUpdateCommand extends GraphCommand {
         });
 
         const requestOptions: any = {
-          url: `${auth.service.resource}/beta/settings/${unifiedGroupSetting[0].id}`,
+          url: `${this.resource}/beta/settings/${unifiedGroupSetting[0].id}`,
           headers: {
-            authorization: `Bearer ${auth.service.accessToken}`,
             accept: 'application/json;odata.metadata=none',
             'content-type': 'application/json'
           },
@@ -148,7 +142,7 @@ class GraphSiteClassificationUpdateCommand extends GraphCommand {
 
         return request.patch(requestOptions);
       })
-      .then((res: any): void => {
+      .then((): void => {
         if (this.verbose) {
           cmd.log(vorpal.chalk.green('DONE'));
         }
@@ -197,18 +191,11 @@ class GraphSiteClassificationUpdateCommand extends GraphCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, connect to the Microsoft Graph
-    using the ${chalk.blue(commands.LOGIN)} command.
-        
-  Remarks:
+      `  Remarks:
 
     ${chalk.yellow('Attention:')} This command is based on an API that is currently
     in preview and is subject to change once the API reached general
     availability.
-
-    To update the Office 365 Tenant site classification configuration, you have
-    to first login to the Microsoft Graph using the ${chalk.blue(commands.LOGIN)} command,
-    eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN}`)}.
 
   Examples:
 
