@@ -1,8 +1,7 @@
 import commands from '../../commands';
 import Command, { CommandOption, CommandValidate, CommandError } from '../../../../Command';
 import * as sinon from 'sinon';
-import appInsights from '../../../../appInsights';
-import auth, { Site } from '../../SpoAuth';
+import auth from '../../../../Auth';
 const command: Command = require('./app-get');
 import * as assert from 'assert';
 import request from '../../../../request';
@@ -13,29 +12,23 @@ describe(commands.APP_GET, () => {
   let log: string[];
   let cmdInstance: any;
   let cmdInstanceLogSpy: sinon.SinonSpy;
-  let trackEvent: any;
-  let telemetry: any;
 
   before(() => {
     sinon.stub(auth, 'restoreAuth').callsFake(() => Promise.resolve());
-    sinon.stub(auth, 'ensureAccessToken').callsFake(() => { return Promise.resolve('ABC'); });
-    sinon.stub(auth, 'getAccessToken').callsFake(() => { return Promise.resolve('ABC'); });
-    trackEvent = sinon.stub(appInsights, 'trackEvent').callsFake((t) => {
-      telemetry = t;
-    });
+    auth.service.connected = true;
+    auth.service.spoUrl = 'https://contoso.sharepoint.com';
   });
 
   beforeEach(() => {
     vorpal = require('../../../../vorpal-init');
     log = [];
     cmdInstance = {
+      action: command.action(),
       log: (msg: string) => {
         log.push(msg);
       }
     };
     cmdInstanceLogSpy = sinon.spy(cmdInstance, 'log');
-    auth.site = new Site();
-    telemetry = null;
   });
 
   afterEach(() => {
@@ -47,11 +40,10 @@ describe(commands.APP_GET, () => {
 
   after(() => {
     Utils.restore([
-      appInsights.trackEvent,
-      auth.ensureAccessToken,
-      auth.getAccessToken,
       auth.restoreAuth
     ]);
+    auth.service.connected = false;
+    auth.service.spoUrl = undefined;
   });
 
   it('has correct name', () => {
@@ -62,57 +54,13 @@ describe(commands.APP_GET, () => {
     assert.notEqual(command.description, null);
   });
 
-  it('calls telemetry', (done) => {
-    cmdInstance.action = command.action();
-    cmdInstance.action({ options: {} }, () => {
-      try {
-        assert(trackEvent.called);
-        done();
-      }
-      catch (e) {
-        done(e);
-      }
-    });
-  });
-
-  it('logs correct telemetry event', (done) => {
-    cmdInstance.action = command.action();
-    cmdInstance.action({ options: {} }, () => {
-      try {
-        assert.equal(telemetry.name, commands.APP_GET);
-        done();
-      }
-      catch (e) {
-        done(e);
-      }
-    });
-  });
-
-  it('aborts when not logged in to a SharePoint site', (done) => {
-    auth.site = new Site();
-    auth.site.connected = false;
-    cmdInstance.action = command.action();
-    cmdInstance.action({ options: { debug: true } }, (err?: any) => {
-      try {
-        assert.equal(JSON.stringify(err), JSON.stringify(new CommandError('Log in to a SharePoint Online site first')));
-        done();
-      }
-      catch (e) {
-        done(e);
-      }
-    });
-  });
-
   it('retrieves information about the app with the specified id from the tenant app catalog (debug)', (done) => {
     sinon.stub(request, 'get').callsFake((opts) => {
-
       if (opts.url.indexOf('SP_TenantSettings_Current') > -1) {
         return Promise.resolve({ "CorporateCatalogUrl": "https://contoso.sharepoint.com/sites/apps" });
       }
       if (opts.url.indexOf(`/_api/web/tenantappcatalog/AvailableApps/GetById('b2307a39-e878-458b-bc90-03bc578531d6')`) > -1) {
-        if (opts.headers.authorization &&
-          opts.headers.authorization.indexOf('Bearer ') === 0 &&
-          opts.headers.accept &&
+        if (opts.headers.accept &&
           opts.headers.accept.indexOf('application/json') === 0) {
           return Promise.resolve({
             ID: 'b2307a39-e878-458b-bc90-03bc578531d6',
@@ -126,11 +74,6 @@ describe(commands.APP_GET, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso-admin.sharepoint.com';
-    auth.site.tenantId = 'abc';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: true, id: 'b2307a39-e878-458b-bc90-03bc578531d6' } }, () => {
       try {
         assert(cmdInstanceLogSpy.calledWith({
@@ -156,9 +99,7 @@ describe(commands.APP_GET, () => {
         return Promise.resolve({ "CorporateCatalogUrl": "https://contoso.sharepoint.com/sites/apps" });
       }
       if (opts.url.indexOf(`/_api/web/sitecollectionappcatalog/AvailableApps/GetById('b2307a39-e878-458b-bc90-03bc578531d6')`) > -1) {
-        if (opts.headers.authorization &&
-          opts.headers.authorization.indexOf('Bearer ') === 0 &&
-          opts.headers.accept &&
+        if (opts.headers.accept &&
           opts.headers.accept.indexOf('application/json') === 0) {
           return Promise.resolve({
             ID: 'b2307a39-e878-458b-bc90-03bc578531d6',
@@ -172,12 +113,6 @@ describe(commands.APP_GET, () => {
       return Promise.reject('Invalid request');
     });
 
-
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso-admin.sharepoint.com';
-    auth.site.tenantId = 'abc';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: true, id: 'b2307a39-e878-458b-bc90-03bc578531d6', scope: 'sitecollection', appCatalogUrl: 'https://contoso-admin.sharepoint.com' } }, () => {
       try {
         assert(cmdInstanceLogSpy.calledWith({
@@ -203,9 +138,7 @@ describe(commands.APP_GET, () => {
         return Promise.resolve({ "CorporateCatalogUrl": "https://contoso.sharepoint.com/sites/apps" });
       }
       if (opts.url.indexOf(`/_api/web/tenantappcatalog/AvailableApps/GetById('b2307a39-e878-458b-bc90-03bc578531d6')`) > -1) {
-        if (opts.headers.authorization &&
-          opts.headers.authorization.indexOf('Bearer ') === 0 &&
-          opts.headers.accept &&
+        if (opts.headers.accept &&
           opts.headers.accept.indexOf('application/json') === 0) {
           return Promise.resolve({
             ID: 'b2307a39-e878-458b-bc90-03bc578531d6',
@@ -219,11 +152,6 @@ describe(commands.APP_GET, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso-admin.sharepoint.com';
-    auth.site.tenantId = 'abc';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: false, id: 'b2307a39-e878-458b-bc90-03bc578531d6' } }, () => {
       try {
         assert(cmdInstanceLogSpy.calledWith({
@@ -249,9 +177,7 @@ describe(commands.APP_GET, () => {
         return Promise.resolve({ "CorporateCatalogUrl": "https://contoso.sharepoint.com/sites/apps" });
       }
       if (opts.url.indexOf(`/_api/web/sitecollectionappcatalog/AvailableApps/GetById('b2307a39-e878-458b-bc90-03bc578531d6')`) > -1) {
-        if (opts.headers.authorization &&
-          opts.headers.authorization.indexOf('Bearer ') === 0 &&
-          opts.headers.accept &&
+        if (opts.headers.accept &&
           opts.headers.accept.indexOf('application/json') === 0) {
           return Promise.resolve({
             ID: 'b2307a39-e878-458b-bc90-03bc578531d6',
@@ -265,11 +191,6 @@ describe(commands.APP_GET, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso-admin.sharepoint.com';
-    auth.site.tenantId = 'abc';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: false, id: 'b2307a39-e878-458b-bc90-03bc578531d6', scope: 'sitecollection', appCatalogUrl: 'https://contoso-admin.sharepoint.com' } }, () => {
       try {
         assert(cmdInstanceLogSpy.calledWith({
@@ -295,9 +216,7 @@ describe(commands.APP_GET, () => {
         return Promise.resolve({ "CorporateCatalogUrl": "https://contoso.sharepoint.com/sites/apps" });
       }
       if (opts.url.indexOf(`/_api/web/tenantappcatalog/AvailableApps/GetById('b2307a39-e878-458b-bc90-03bc578531d6')`) > -1) {
-        if (opts.headers.authorization &&
-          opts.headers.authorization.indexOf('Bearer ') === 0 &&
-          opts.headers.accept &&
+        if (opts.headers.accept &&
           opts.headers.accept.indexOf('application/json') === 0) {
           return Promise.resolve({
             ID: 'b2307a39-e878-458b-bc90-03bc578531d6',
@@ -317,11 +236,6 @@ describe(commands.APP_GET, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso-admin.sharepoint.com';
-    auth.site.tenantId = 'abc';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: false, name: 'solution.sppkg', appCatalogUrl: 'https://contoso.sharepoint.com/sites/apps' } }, () => {
       try {
         assert(cmdInstanceLogSpy.calledWith({
@@ -348,9 +262,7 @@ describe(commands.APP_GET, () => {
       }
 
       if (opts.url.indexOf(`/_api/web/sitecollectionappcatalog/AvailableApps/GetById('b2307a39-e878-458b-bc90-03bc578531d6')`) > -1) {
-        if (opts.headers.authorization &&
-          opts.headers.authorization.indexOf('Bearer ') === 0 &&
-          opts.headers.accept &&
+        if (opts.headers.accept &&
           opts.headers.accept.indexOf('application/json') === 0) {
           return Promise.resolve({
             ID: 'b2307a39-e878-458b-bc90-03bc578531d6',
@@ -370,11 +282,6 @@ describe(commands.APP_GET, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com/sites/site1';
-    auth.site.tenantId = 'abc';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: false, name: 'solution.sppkg', scope: 'sitecollection', appCatalogUrl: 'https://contoso.sharepoint.com/sites/site1' } }, () => {
       try {
         assert(cmdInstanceLogSpy.calledWith({
@@ -400,9 +307,7 @@ describe(commands.APP_GET, () => {
         return Promise.resolve({ "CorporateCatalogUrl": "https://contoso.sharepoint.com/sites/apps" });
       }
       if (opts.url.indexOf(`/_api/web/tenantappcatalog/AvailableApps/GetById('b2307a39-e878-458b-bc90-03bc578531d6')`) > -1) {
-        if (opts.headers.authorization &&
-          opts.headers.authorization.indexOf('Bearer ') === 0 &&
-          opts.headers.accept &&
+        if (opts.headers.accept &&
           opts.headers.accept.indexOf('application/json') === 0) {
           return Promise.resolve({
             ID: 'b2307a39-e878-458b-bc90-03bc578531d6',
@@ -422,11 +327,6 @@ describe(commands.APP_GET, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso-admin.sharepoint.com';
-    auth.site.tenantId = 'abc';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: true, name: 'solution.sppkg' } }, () => {
       try {
         assert(cmdInstanceLogSpy.calledWith({
@@ -447,9 +347,7 @@ describe(commands.APP_GET, () => {
   });
 
   it('should handle getfolderbyserverrelativeurl error', (done) => {
-
     sinon.stub(request, 'get').callsFake((opts) => {
-
       if (opts.url === `https://contoso.sharepoint.com/_api/web/getfolderbyserverrelativeurl('AppCatalog')/files('solution.sppkg')?$select=UniqueId`) {
         return Promise.reject({
           error: {
@@ -466,10 +364,6 @@ describe(commands.APP_GET, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.prompt = (options: any, cb: (result: { appCatalogUrl: string, }) => void) => {
       cb({ appCatalogUrl: '' });
     };
@@ -497,9 +391,7 @@ describe(commands.APP_GET, () => {
       }
 
       if (opts.url.indexOf(`/_api/web/tenantappcatalog/AvailableApps/GetById('b2307a39-e878-458b-bc90-03bc578531d6')`) > -1) {
-        if (opts.headers.authorization &&
-          opts.headers.authorization.indexOf('Bearer ') === 0 &&
-          opts.headers.accept &&
+        if (opts.headers.accept &&
           opts.headers.accept.indexOf('application/json') === 0) {
           return Promise.resolve({
             ID: 'b2307a39-e878-458b-bc90-03bc578531d6',
@@ -513,10 +405,6 @@ describe(commands.APP_GET, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.prompt = (options: any, cb: (result: { appCatalogUrl: string }) => void) => {
       cb({ appCatalogUrl: 'https://contoso.sharepoint.com/sites/apps' });
     };
@@ -543,9 +431,7 @@ describe(commands.APP_GET, () => {
       }
 
       if (opts.url.indexOf(`/_api/web/tenantappcatalog/AvailableApps/GetById('b2307a39-e878-458b-bc90-03bc578531d6')`) > -1) {
-        if (opts.headers.authorization &&
-          opts.headers.authorization.indexOf('Bearer ') === 0 &&
-          opts.headers.accept &&
+        if (opts.headers.accept &&
           opts.headers.accept.indexOf('application/json') === 0) {
           return Promise.reject({
             error: {
@@ -564,11 +450,6 @@ describe(commands.APP_GET, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso-admin.sharepoint.com';
-    auth.site.tenantId = 'abc';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: false, id: 'b2307a39-e878-458b-bc90-03bc578531d6' } }, (err?: any) => {
       try {
         assert.equal(JSON.stringify(err), JSON.stringify(new CommandError("Exception of type 'Microsoft.SharePoint.Client.ResourceNotFoundException' was thrown.")));
@@ -589,9 +470,7 @@ describe(commands.APP_GET, () => {
         return Promise.resolve({ "CorporateCatalogUrl": "https://contoso.sharepoint.com/sites/apps" });
       }
       if (opts.url.indexOf(`/_api/web/sitecollectionappcatalog/AvailableApps/GetById('b2307a39-e878-458b-bc90-03bc578531d6')`) > -1) {
-        if (opts.headers.authorization &&
-          opts.headers.authorization.indexOf('Bearer ') === 0 &&
-          opts.headers.accept &&
+        if (opts.headers.accept &&
           opts.headers.accept.indexOf('application/json') === 0) {
           return Promise.reject({
             error: {
@@ -610,11 +489,6 @@ describe(commands.APP_GET, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso-admin.sharepoint.com';
-    auth.site.tenantId = 'abc';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: false, id: 'b2307a39-e878-458b-bc90-03bc578531d6', scope: 'sitecollection', appCatalogUrl: 'https://contoso-admin.sharepoint.com' } }, (err?: any) => {
       try {
         assert.equal(JSON.stringify(err), JSON.stringify(new CommandError("Exception of type 'Microsoft.SharePoint.Client.ResourceNotFoundException' was thrown.")));
@@ -635,9 +509,7 @@ describe(commands.APP_GET, () => {
         return Promise.resolve({ "CorporateCatalogUrl": "https://contoso.sharepoint.com/sites/apps" });
       }
       if (opts.url.indexOf(`/_api/web/tenantappcatalog/AvailableApps/GetById('b2307a39-e878-458b-bc90-03bc578531d6')`) > -1) {
-        if (opts.headers.authorization &&
-          opts.headers.authorization.indexOf('Bearer ') === 0 &&
-          opts.headers.accept &&
+        if (opts.headers.accept &&
           opts.headers.accept.indexOf('application/json') === 0) {
           return Promise.reject({ error: 'An error has occurred' });
         }
@@ -646,11 +518,6 @@ describe(commands.APP_GET, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso-admin.sharepoint.com';
-    auth.site.tenantId = 'abc';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: false, id: 'b2307a39-e878-458b-bc90-03bc578531d6' } }, (err?: any) => {
       try {
         assert.equal(JSON.stringify(err), JSON.stringify(new CommandError('An error has occurred')));
@@ -672,9 +539,7 @@ describe(commands.APP_GET, () => {
       }
 
       if (opts.url.indexOf(`/_api/web/tenantappcatalog/AvailableApps/GetById('b2307a39-e878-458b-bc90-03bc578531d6')`) > -1) {
-        if (opts.headers.authorization &&
-          opts.headers.authorization.indexOf('Bearer ') === 0 &&
-          opts.headers.accept &&
+        if (opts.headers.accept &&
           opts.headers.accept.indexOf('application/json') === 0) {
           return Promise.reject({
             error: {
@@ -692,11 +557,6 @@ describe(commands.APP_GET, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso-admin.sharepoint.com';
-    auth.site.tenantId = 'abc';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: false, id: 'b2307a39-e878-458b-bc90-03bc578531d6' } }, (err?: any) => {
       try {
         assert.equal(JSON.stringify(err), JSON.stringify(new CommandError('An error has occurred')));
@@ -747,7 +607,6 @@ describe(commands.APP_GET, () => {
   });
 
   it('should fail when \'sitecollection\' scope, but no appCatalogUrl specified', () => {
-
     const actual = (command.validate() as CommandValidate)({ options: { id: 'dd20afdf-d7fd-4662-a443-b69e65a72bd4', filePath: 'abc', scope: 'sitecollection' } });
     assert.notEqual(actual, true);
   });
@@ -758,7 +617,6 @@ describe(commands.APP_GET, () => {
   });
 
   it('should fail when \'sitecollection\' scope, but  bad appCatalogUrl format specified', () => {
-
     const actual = (command.validate() as CommandValidate)({ options: { id: 'dd20afdf-d7fd-4662-a443-b69e65a72bd4', filePath: 'abc', scope: 'sitecollection', appCatalogUrl: 'contoso.sharepoint.com' } });
     assert.notEqual(actual, true);
   });
@@ -841,24 +699,5 @@ describe(commands.APP_GET, () => {
     });
     Utils.restore(vorpal.find);
     assert(containsExamples);
-  });
-
-  it('correctly handles lack of valid access token', (done) => {
-    Utils.restore(auth.getAccessToken);
-    sinon.stub(auth, 'getAccessToken').callsFake(() => { return Promise.reject(new Error('Error getting access token')); });
-
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
-    cmdInstance.action({ options: { debug: true, appCatalogUrl: 'https://contoso.sharepoint.com', scope: 'sitecollection' } }, (err?: any) => {
-      try {
-        assert.equal(JSON.stringify(err), JSON.stringify(new CommandError('Error getting access token')));
-        done();
-      }
-      catch (e) {
-        done(e);
-      }
-    });
   });
 });

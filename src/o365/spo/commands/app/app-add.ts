@@ -1,4 +1,3 @@
-import auth from '../../SpoAuth';
 import config from '../../../../config';
 import request from '../../../../request';
 import commands from '../../commands';
@@ -9,7 +8,6 @@ import {
 } from '../../../../Command';
 import * as fs from 'fs';
 import * as path from 'path';
-import { Auth } from '../../../../Auth';
 import { SpoAppBaseCommand } from './SpoAppBaseCommand';
 
 const vorpal: Vorpal = require('../../../../vorpal-init');
@@ -45,28 +43,13 @@ class SpoAppAddCommand extends SpoAppBaseCommand {
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
     const scope: string = (args.options.scope) ? args.options.scope.toLowerCase() : 'tenant';
     const overwrite: boolean = args.options.overwrite || false;
-    let appCatalogSiteUrl = '';
-    let siteAccessToken = '';
 
-    auth
-      .ensureAccessToken(auth.site.url, cmd, this.debug)
-      .then((accessToken: string): Promise<string> => {
-        return this.getAppCatalogSiteUrl(cmd, auth.site.url, accessToken, args)
+    this
+      .getSpoUrl(cmd, this.debug)
+      .then((spoUrl: string): Promise<string> => {
+        return this.getAppCatalogSiteUrl(cmd, spoUrl, args);
       })
       .then((appCatalogUrl: string): Promise<string> => {
-        appCatalogSiteUrl = appCatalogUrl;
-
-        const resource: string = Auth.getResourceFromUrl(appCatalogSiteUrl);
-
-        if (this.debug) {
-          cmd.log(`Retrieving access token for ${resource}...`);
-        }
-
-        return auth.getAccessToken(resource, auth.service.refreshToken as string, cmd, this.debug);
-      })
-      .then((accessToken: string): Promise<string> => {
-        siteAccessToken = accessToken;
-
         const fullPath: string = path.resolve(args.options.filePath);
         if (this.verbose) {
           cmd.log(`Adding app '${fullPath}' to app catalog...`);
@@ -74,9 +57,8 @@ class SpoAppAddCommand extends SpoAppBaseCommand {
 
         const fileName: string = path.basename(fullPath);
         const requestOptions: any = {
-          url: `${appCatalogSiteUrl}/_api/web/${scope}appcatalog/Add(overwrite=${(overwrite.toString().toLowerCase())}, url='${fileName}')`,
+          url: `${appCatalogUrl}/_api/web/${scope}appcatalog/Add(overwrite=${(overwrite.toString().toLowerCase())}, url='${fileName}')`,
           headers: {
-            authorization: `Bearer ${siteAccessToken}`,
             accept: 'application/json;odata=nometadata',
             binaryStringRequestBody: 'true'
           },
@@ -167,14 +149,7 @@ class SpoAppAddCommand extends SpoAppBaseCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(commands.APP_ADD).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to a SharePoint Online site,
-    using the ${chalk.blue(commands.LOGIN)} command.
-                
-  Remarks:
-
-    To add an app to the tenant or site collection app catalog, you have to
-    first log in to a SharePoint site using the ${chalk.blue(commands.LOGIN)} command,
-    eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN} https://contoso.sharepoint.com`)}.
+      `  Remarks:
 
     When specifying the path to the app package file you can use both relative
     and absolute paths. Note, that ~ in the path, will not be resolved and will

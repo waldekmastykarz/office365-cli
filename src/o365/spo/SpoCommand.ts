@@ -11,10 +11,6 @@ export interface FormDigest {
 }
 
 export default abstract class SpoCommand extends Command {
-  protected requiresTenantAdmin(): boolean {
-    return false;
-  }
-
   public action(): CommandAction {
     const cmd: SpoCommand = this;
 

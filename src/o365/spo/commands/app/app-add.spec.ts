@@ -1,8 +1,7 @@
 import commands from '../../commands';
 import Command, { CommandOption, CommandValidate, CommandError } from '../../../../Command';
 import * as sinon from 'sinon';
-import appInsights from '../../../../appInsights';
-import auth, { Site } from '../../SpoAuth';
+import auth from '../../../../Auth';
 const command: Command = require('./app-add');
 import * as assert from 'assert';
 import request from '../../../../request';
@@ -14,30 +13,24 @@ describe(commands.APP_ADD, () => {
   let log: string[];
   let cmdInstance: any;
   let cmdInstanceLogSpy: sinon.SinonSpy;
-  let trackEvent: any;
-  let telemetry: any;
   let requests: any[];
 
   before(() => {
     sinon.stub(auth, 'restoreAuth').callsFake(() => Promise.resolve());
-    sinon.stub(auth, 'ensureAccessToken').callsFake(() => { return Promise.resolve('ABC'); });
-    sinon.stub(auth, 'getAccessToken').callsFake(() => { return Promise.resolve('ABC'); });
-    trackEvent = sinon.stub(appInsights, 'trackEvent').callsFake((t) => {
-      telemetry = t;
-    });
+    auth.service.connected = true;
+    auth.service.spoUrl = 'https://contoso.sharepoint.com';
   });
 
   beforeEach(() => {
     vorpal = require('../../../../vorpal-init');
     log = [];
     cmdInstance = {
+      action: command.action(),
       log: (msg: string) => {
         log.push(msg);
       }
     };
     cmdInstanceLogSpy = sinon.spy(cmdInstance, 'log');
-    auth.site = new Site();
-    telemetry = null;
     requests = [];
     sinon.stub(request, 'get').resolves({ "CorporateCatalogUrl": "https://contoso.sharepoint.com/sites/apps" });
   });
@@ -53,11 +46,10 @@ describe(commands.APP_ADD, () => {
 
   after(() => {
     Utils.restore([
-      appInsights.trackEvent,
-      auth.ensureAccessToken,
-      auth.getAccessToken,
       auth.restoreAuth
     ]);
+    auth.service.connected = false;
+    auth.service.spoUrl = undefined;
   });
 
   it('has correct name', () => {
@@ -68,54 +60,10 @@ describe(commands.APP_ADD, () => {
     assert.notEqual(command.description, null);
   });
 
-  it('calls telemetry', (done) => {
-    cmdInstance.action = command.action();
-    cmdInstance.action({ options: {} }, () => {
-      try {
-        assert(trackEvent.called);
-        done();
-      }
-      catch (e) {
-        done(e);
-      }
-    });
-  });
-
-  it('logs correct telemetry event', (done) => {
-    cmdInstance.action = command.action();
-    cmdInstance.action({ options: {} }, () => {
-      try {
-        assert.equal(telemetry.name, commands.APP_ADD);
-        done();
-      }
-      catch (e) {
-        done(e);
-      }
-    });
-  });
-
-  it('aborts when not logged in to a SharePoint site', (done) => {
-    auth.site = new Site();
-    auth.site.connected = false;
-    cmdInstance.action = command.action();
-    cmdInstance.action({ options: { debug: true } }, (err?: any) => {
-      try {
-        assert.equal(JSON.stringify(err), JSON.stringify(new CommandError('Log in to a SharePoint Online site first')));
-        done();
-      }
-      catch (e) {
-        done(e);
-      }
-    });
-  });
-
   it('adds new app to the tenant app catalog', (done) => {
     sinon.stub(request, 'post').callsFake((opts) => {
-
       if (opts.url.indexOf(`/_api/web/tenantappcatalog/Add(overwrite=false, url='spfx.sppkg')`) > -1) {
-        if (opts.headers.authorization &&
-          opts.headers.authorization.indexOf('Bearer ') === 0 &&
-          opts.headers.accept &&
+        if (opts.headers.accept &&
           opts.headers.accept.indexOf('application/json') === 0 &&
           opts.headers.binaryStringRequestBody &&
           opts.body) {
@@ -128,10 +76,6 @@ describe(commands.APP_ADD, () => {
 
     sinon.stub(fs, 'readFileSync').callsFake(() => '123');
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: false, filePath: 'spfx.sppkg' } }, () => {
       try {
         assert(cmdInstanceLogSpy.calledWith('bda5ce2f-9ac7-4a6f-a98b-7ae1c168519e'));
@@ -148,9 +92,7 @@ describe(commands.APP_ADD, () => {
       requests.push(opts);
 
       if (opts.url.indexOf(`/_api/web/tenantappcatalog/Add(overwrite=false, url='spfx.sppkg')`) > -1) {
-        if (opts.headers.authorization &&
-          opts.headers.authorization.indexOf('Bearer ') === 0 &&
-          opts.headers.accept &&
+        if (opts.headers.accept &&
           opts.headers.accept.indexOf('application/json') === 0 &&
           opts.headers.binaryStringRequestBody &&
           opts.body) {
@@ -162,16 +104,10 @@ describe(commands.APP_ADD, () => {
     });
     sinon.stub(fs, 'readFileSync').callsFake(() => '123');
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: true, filePath: 'spfx.sppkg' } }, () => {
       let correctRequestIssued = false;
       requests.forEach(r => {
         if (r.url.indexOf(`/_api/web/tenantappcatalog/Add(overwrite=false, url='spfx.sppkg')`) > -1 &&
-          r.headers.authorization &&
-          r.headers.authorization.indexOf('Bearer ') === 0 &&
           r.headers.accept &&
           r.headers.accept.indexOf('application/json') === 0 &&
           r.headers.binaryStringRequestBody &&
@@ -201,9 +137,7 @@ describe(commands.APP_ADD, () => {
       requests.push(opts);
 
       if (opts.url.indexOf(`/_api/web/sitecollectionappcatalog/Add(overwrite=false, url='spfx.sppkg')`) > -1) {
-        if (opts.headers.authorization &&
-          opts.headers.authorization.indexOf('Bearer ') === 0 &&
-          opts.headers.accept &&
+        if (opts.headers.accept &&
           opts.headers.accept.indexOf('application/json') === 0 &&
           opts.headers.binaryStringRequestBody &&
           opts.body) {
@@ -215,16 +149,10 @@ describe(commands.APP_ADD, () => {
     });
     sinon.stub(fs, 'readFileSync').callsFake(() => '123');
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: true, filePath: 'spfx.sppkg', scope: 'sitecollection', appCatalogUrl: 'https://contoso.sharepoint.com' } }, () => {
       let correctRequestIssued = false;
       requests.forEach(r => {
         if (r.url.indexOf(`/_api/web/sitecollectionappcatalog/Add(overwrite=false, url='spfx.sppkg')`) > -1 &&
-          r.headers.authorization &&
-          r.headers.authorization.indexOf('Bearer ') === 0 &&
           r.headers.accept &&
           r.headers.accept.indexOf('application/json') === 0 &&
           r.headers.binaryStringRequestBody &&
@@ -254,9 +182,7 @@ describe(commands.APP_ADD, () => {
       requests.push(opts);
 
       if (opts.url.indexOf(`/_api/web/tenantappcatalog/Add(overwrite=false, url='spfx.sppkg')`) > -1) {
-        if (opts.headers.authorization &&
-          opts.headers.authorization.indexOf('Bearer ') === 0 &&
-          opts.headers.accept &&
+        if (opts.headers.accept &&
           opts.headers.accept.indexOf('application/json') === 0 &&
           opts.headers.binaryStringRequestBody &&
           opts.body) {
@@ -268,10 +194,6 @@ describe(commands.APP_ADD, () => {
     });
     sinon.stub(fs, 'readFileSync').callsFake(() => '123');
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: false, filePath: 'spfx.sppkg', output: 'json' } }, () => {
       try {
         assert(cmdInstanceLogSpy.calledWith(JSON.parse('{"CheckInComment":"","CheckOutType":2,"ContentTag":"{BDA5CE2F-9AC7-4A6F-A98B-7AE1C168519E},4,3","CustomizedPageStatus":0,"ETag":"\\"{BDA5CE2F-9AC7-4A6F-A98B-7AE1C168519E},4\\"","Exists":true,"IrmEnabled":false,"Length":"3752","Level":1,"LinkingUri":null,"LinkingUrl":"","MajorVersion":3,"MinorVersion":0,"Name":"spfx-01.sppkg","ServerRelativeUrl":"/sites/apps/AppCatalog/spfx.sppkg","TimeCreated":"2018-05-25T06:59:20Z","TimeLastModified":"2018-05-25T08:23:18Z","Title":"spfx-01-client-side-solution","UIVersion":1536,"UIVersionLabel":"3.0","UniqueId":"bda5ce2f-9ac7-4a6f-a98b-7ae1c168519e"}')));
@@ -294,9 +216,7 @@ describe(commands.APP_ADD, () => {
       requests.push(opts);
 
       if (opts.url.indexOf(`/_api/web/tenantappcatalog/Add(overwrite=false, url='spfx.sppkg')`) > -1) {
-        if (opts.headers.authorization &&
-          opts.headers.authorization.indexOf('Bearer ') === 0 &&
-          opts.headers.accept &&
+        if (opts.headers.accept &&
           opts.headers.accept.indexOf('application/json') === 0 &&
           opts.headers.binaryStringRequestBody &&
           opts.body) {
@@ -310,10 +230,6 @@ describe(commands.APP_ADD, () => {
     });
     sinon.stub(fs, 'readFileSync').callsFake(() => '123');
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: true, filePath: 'spfx.sppkg' } }, (err?: any) => {
       try {
         assert.equal(JSON.stringify(err), JSON.stringify(new CommandError('A file with the name AppCatalog/spfx.sppkg already exists. It was last modified by i:0#.f|membership|admin@contoso.onmi on 24 Nov 2017 12:50:43 -0800.')));
@@ -336,9 +252,7 @@ describe(commands.APP_ADD, () => {
       requests.push(opts);
 
       if (opts.url.indexOf(`/_api/web/sitecollectionappcatalog/Add(overwrite=false, url='spfx.sppkg')`) > -1) {
-        if (opts.headers.authorization &&
-          opts.headers.authorization.indexOf('Bearer ') === 0 &&
-          opts.headers.accept &&
+        if (opts.headers.accept &&
           opts.headers.accept.indexOf('application/json') === 0 &&
           opts.headers.binaryStringRequestBody &&
           opts.body) {
@@ -352,10 +266,6 @@ describe(commands.APP_ADD, () => {
     });
     sinon.stub(fs, 'readFileSync').callsFake(() => '123');
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: true, filePath: 'spfx.sppkg', scope: 'sitecollection', appCatalogUrl: 'https://contoso.sharepoint.com' } }, (err?: any) => {
       try {
         assert.equal(JSON.stringify(err), JSON.stringify(new CommandError('A file with the name AppCatalog/spfx.sppkg already exists. It was last modified by i:0#.f|membership|admin@contoso.onmi on 24 Nov 2017 12:50:43 -0800.')));
@@ -378,9 +288,7 @@ describe(commands.APP_ADD, () => {
       requests.push(opts);
 
       if (opts.url.indexOf(`/_api/web/tenantappcatalog/Add(overwrite=false, url='spfx.sppkg')`) > -1) {
-        if (opts.headers.authorization &&
-          opts.headers.authorization.indexOf('Bearer ') === 0 &&
-          opts.headers.accept &&
+        if (opts.headers.accept &&
           opts.headers.accept.indexOf('application/json') === 0 &&
           opts.headers.binaryStringRequestBody &&
           opts.body) {
@@ -392,10 +300,6 @@ describe(commands.APP_ADD, () => {
     });
     sinon.stub(fs, 'readFileSync').callsFake(() => '123');
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: true, filePath: 'spfx.sppkg' } }, (err?: any) => {
       try {
         assert.equal(JSON.stringify(err), JSON.stringify(new CommandError('An error has occurred')));
@@ -418,9 +322,7 @@ describe(commands.APP_ADD, () => {
       requests.push(opts);
 
       if (opts.url.indexOf(`/_api/web/sitecollectionappcatalog/Add(overwrite=false, url='spfx.sppkg')`) > -1) {
-        if (opts.headers.authorization &&
-          opts.headers.authorization.indexOf('Bearer ') === 0 &&
-          opts.headers.accept &&
+        if (opts.headers.accept &&
           opts.headers.accept.indexOf('application/json') === 0 &&
           opts.headers.binaryStringRequestBody &&
           opts.body) {
@@ -432,10 +334,6 @@ describe(commands.APP_ADD, () => {
     });
     sinon.stub(fs, 'readFileSync').callsFake(() => '123');
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: true, filePath: 'spfx.sppkg', scope: 'sitecollection', appCatalogUrl: 'https://contoso.sharepoint.com' } }, (err?: any) => {
       try {
         assert.equal(JSON.stringify(err), JSON.stringify(new CommandError('An error has occurred')));
@@ -458,9 +356,7 @@ describe(commands.APP_ADD, () => {
       requests.push(opts);
 
       if (opts.url.indexOf(`/_api/web/tenantappcatalog/Add(overwrite=false, url='spfx.sppkg')`) > -1) {
-        if (opts.headers.authorization &&
-          opts.headers.authorization.indexOf('Bearer ') === 0 &&
-          opts.headers.accept &&
+        if (opts.headers.accept &&
           opts.headers.accept.indexOf('application/json') === 0 &&
           opts.headers.binaryStringRequestBody &&
           opts.body) {
@@ -472,10 +368,6 @@ describe(commands.APP_ADD, () => {
     });
     sinon.stub(fs, 'readFileSync').callsFake(() => '123');
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: true, filePath: 'spfx.sppkg' } }, (err?: any) => {
       try {
         assert.equal(JSON.stringify(err), JSON.stringify(new CommandError('An error has occurred')));
@@ -498,9 +390,7 @@ describe(commands.APP_ADD, () => {
       requests.push(opts);
 
       if (opts.url.indexOf(`/_api/web/sitecollectionappcatalog/Add(overwrite=false, url='spfx.sppkg')`) > -1) {
-        if (opts.headers.authorization &&
-          opts.headers.authorization.indexOf('Bearer ') === 0 &&
-          opts.headers.accept &&
+        if (opts.headers.accept &&
           opts.headers.accept.indexOf('application/json') === 0 &&
           opts.headers.binaryStringRequestBody &&
           opts.body) {
@@ -512,10 +402,6 @@ describe(commands.APP_ADD, () => {
     });
     sinon.stub(fs, 'readFileSync').callsFake(() => '123');
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: true, filePath: 'spfx.sppkg', scope: 'sitecollection', appCatalogUrl: 'https://contoso.sharepoint.com' } }, (err?: any) => {
       try {
         assert.equal(JSON.stringify(err), JSON.stringify(new CommandError('An error has occurred')));
@@ -539,10 +425,6 @@ describe(commands.APP_ADD, () => {
       return Promise.reject('An error has occurred');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso-admin.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.action({
       options: {
         debug: true, filePath: 'spfx.sppkg'
@@ -581,10 +463,6 @@ describe(commands.APP_ADD, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso-admin.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.action({
       options: {
         debug: true, filePath: 'spfx.sppkg'
@@ -664,11 +542,8 @@ describe(commands.APP_ADD, () => {
       requests.push(opts);
 
       if (opts.url.indexOf(`/_api/web/`) > -1) {
-        if (opts.headers.authorization &&
-          opts.headers.authorization.indexOf('Bearer ') === 0 &&
-          opts.headers.accept &&
+        if (opts.headers.accept &&
           opts.headers.accept.indexOf('application/json') === 0 &&
-
           opts.headers.binaryStringRequestBody &&
           opts.body) {
           return Promise.resolve('{"CheckInComment":"","CheckOutType":2,"ContentTag":"{BDA5CE2F-9AC7-4A6F-A98B-7AE1C168519E},4,3","CustomizedPageStatus":0,"ETag":"\\"{BDA5CE2F-9AC7-4A6F-A98B-7AE1C168519E},4\\"","Exists":true,"IrmEnabled":false,"Length":"3752","Level":1,"LinkingUri":null,"LinkingUrl":"","MajorVersion":3,"MinorVersion":0,"Name":"spfx-01.sppkg","ServerRelativeUrl":"/sites/apps/AppCatalog/spfx.sppkg","TimeCreated":"2018-05-25T06:59:20Z","TimeLastModified":"2018-05-25T08:23:18Z","Title":"spfx-01-client-side-solution","UIVersion":1536,"UIVersionLabel":"3.0","UniqueId":"bda5ce2f-9ac7-4a6f-a98b-7ae1c168519e"}');
@@ -679,10 +554,6 @@ describe(commands.APP_ADD, () => {
     });
     sinon.stub(fs, 'readFileSync').callsFake(() => '123');
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { filePath: 'spfx.sppkg' } }, () => {
       let correctAppCatalogUsed = false;
       requests.forEach(r => {
@@ -712,11 +583,8 @@ describe(commands.APP_ADD, () => {
       requests.push(opts);
 
       if (opts.url.indexOf(`/_api/web/`) > -1) {
-        if (opts.headers.authorization &&
-          opts.headers.authorization.indexOf('Bearer ') === 0 &&
-          opts.headers.accept &&
+        if (opts.headers.accept &&
           opts.headers.accept.indexOf('application/json') === 0 &&
-
           opts.headers.binaryStringRequestBody &&
           opts.body) {
           return Promise.resolve('{"CheckInComment":"","CheckOutType":2,"ContentTag":"{BDA5CE2F-9AC7-4A6F-A98B-7AE1C168519E},4,3","CustomizedPageStatus":0,"ETag":"\\"{BDA5CE2F-9AC7-4A6F-A98B-7AE1C168519E},4\\"","Exists":true,"IrmEnabled":false,"Length":"3752","Level":1,"LinkingUri":null,"LinkingUrl":"","MajorVersion":3,"MinorVersion":0,"Name":"spfx-01.sppkg","ServerRelativeUrl":"/sites/apps/AppCatalog/spfx.sppkg","TimeCreated":"2018-05-25T06:59:20Z","TimeLastModified":"2018-05-25T08:23:18Z","Title":"spfx-01-client-side-solution","UIVersion":1536,"UIVersionLabel":"3.0","UniqueId":"bda5ce2f-9ac7-4a6f-a98b-7ae1c168519e"}');
@@ -727,10 +595,6 @@ describe(commands.APP_ADD, () => {
     });
     sinon.stub(fs, 'readFileSync').callsFake(() => '123');
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { scope: 'tenant', filePath: 'spfx.sppkg' } }, () => {
       let correctAppCatalogUsed = false;
       requests.forEach(r => {
@@ -760,11 +624,8 @@ describe(commands.APP_ADD, () => {
       requests.push(opts);
 
       if (opts.url.indexOf(`/_api/web/`) > -1) {
-        if (opts.headers.authorization &&
-          opts.headers.authorization.indexOf('Bearer ') === 0 &&
-          opts.headers.accept &&
+        if (opts.headers.accept &&
           opts.headers.accept.indexOf('application/json') === 0 &&
-
           opts.headers.binaryStringRequestBody &&
           opts.body) {
           return Promise.resolve('{"CheckInComment":"","CheckOutType":2,"ContentTag":"{BDA5CE2F-9AC7-4A6F-A98B-7AE1C168519E},4,3","CustomizedPageStatus":0,"ETag":"\\"{BDA5CE2F-9AC7-4A6F-A98B-7AE1C168519E},4\\"","Exists":true,"IrmEnabled":false,"Length":"3752","Level":1,"LinkingUri":null,"LinkingUrl":"","MajorVersion":3,"MinorVersion":0,"Name":"spfx-01.sppkg","ServerRelativeUrl":"/sites/apps/AppCatalog/spfx.sppkg","TimeCreated":"2018-05-25T06:59:20Z","TimeLastModified":"2018-05-25T08:23:18Z","Title":"spfx-01-client-side-solution","UIVersion":1536,"UIVersionLabel":"3.0","UniqueId":"bda5ce2f-9ac7-4a6f-a98b-7ae1c168519e"}');
@@ -775,10 +636,6 @@ describe(commands.APP_ADD, () => {
     });
     sinon.stub(fs, 'readFileSync').callsFake(() => '123');
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { scope: 'sitecollection', filePath: 'spfx.sppkg', appCatalogUrl: 'https://contoso.sharepoint.com' } }, () => {
       let correctAppCatalogUsed = false;
       requests.forEach(r => {
@@ -995,28 +852,5 @@ describe(commands.APP_ADD, () => {
     });
     Utils.restore(vorpal.find);
     assert(containsExamples);
-  });
-
-  it('correctly handles lack of valid access token', (done) => {
-    sinon.stub(request, 'post').callsFake((opts) => {
-      return Promise.reject('Invalid request');
-    });
-    sinon.stub(fs, 'readFileSync').callsFake(() => '123');
-
-    Utils.restore(auth.getAccessToken);
-    sinon.stub(auth, 'getAccessToken').callsFake(() => { return Promise.reject(new Error('Error getting access token')); });
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
-    cmdInstance.action({ options: { debug: true } }, (err?: any) => {
-      try {
-        assert.equal(JSON.stringify(err), JSON.stringify(new CommandError('Error getting access token')));
-        done();
-      }
-      catch (e) {
-        done(e);
-      }
-    });
   });
 });

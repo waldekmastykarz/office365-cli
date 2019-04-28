@@ -1,5 +1,3 @@
-import auth from '../../SpoAuth';
-import { Auth } from '../../../../Auth';
 import config from '../../../../config';
 import commands from '../../commands';
 import GlobalOptions from '../../../../GlobalOptions';
@@ -47,26 +45,15 @@ class SpoAppDeployCommand extends SpoAppBaseCommand {
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
     let appId: string = '';
     const scope: string = (args.options.scope) ? args.options.scope.toLowerCase() : 'tenant';
-    let siteAccessToken: string = '';
-    let appCatalogSiteUrl: string = '';
+    let appCatalogUrl: string = '';
 
-    auth
-      .ensureAccessToken(auth.site.url, cmd, this.debug)
-      .then((accessToken: string): Promise<string> => {
-        return this.getAppCatalogSiteUrl(cmd, auth.site.url, accessToken, args)
+    this
+      .getSpoUrl(cmd, this.debug)
+      .then((spoUrl: string): Promise<string> => {
+        return this.getAppCatalogSiteUrl(cmd, spoUrl, args)
       })
-      .then((appCatalogUrl: string): Promise<string> => {
-        appCatalogSiteUrl = appCatalogUrl;
-
-        const resource: string = Auth.getResourceFromUrl(appCatalogSiteUrl);
-        return auth.getAccessToken(resource, auth.service.refreshToken as string, cmd, this.debug);
-      })
-      .then((accessToken: string): Promise<{ UniqueId: string }> => {
-        siteAccessToken = accessToken;
-
-        if (this.verbose) {
-          cmd.log('Retrieved access token');
-        }
+      .then((_appCatalogUrl: string): Promise<{ UniqueId: string; }> => {
+        appCatalogUrl = _appCatalogUrl;
 
         if (args.options.id) {
           if (this.verbose) {
@@ -81,9 +68,8 @@ class SpoAppDeployCommand extends SpoAppBaseCommand {
           }
 
           const requestOptions: any = {
-            url: `${appCatalogSiteUrl}/_api/web/getfolderbyserverrelativeurl('AppCatalog')/files('${args.options.name}')?$select=UniqueId`,
+            url: `${appCatalogUrl}/_api/web/getfolderbyserverrelativeurl('AppCatalog')/files('${args.options.name}')?$select=UniqueId`,
             headers: {
-              authorization: `Bearer ${siteAccessToken}`,
               accept: 'application/json;odata=nometadata'
             },
             json: true
@@ -100,9 +86,8 @@ class SpoAppDeployCommand extends SpoAppBaseCommand {
         }
 
         const requestOptions: any = {
-          url: `${appCatalogSiteUrl}/_api/web/${scope}appcatalog/AvailableApps/GetById('${appId}')/deploy`,
+          url: `${appCatalogUrl}/_api/web/${scope}appcatalog/AvailableApps/GetById('${appId}')/deploy`,
           headers: {
-            authorization: `Bearer ${siteAccessToken}`,
             accept: 'application/json;odata=nometadata',
             'content-type': 'application/json;odata=nometadata;charset=utf-8'
           },
@@ -188,15 +173,8 @@ class SpoAppDeployCommand extends SpoAppBaseCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(commands.APP_DEPLOY).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to a SharePoint site,
-    using the ${chalk.blue(commands.LOGIN)} command.
-
-  Remarks:
+      `  Remarks:
   
-    To deploy an app in the tenant or site collection app catalog, you have to
-    first log in to a SharePoint site using the ${chalk.blue(commands.LOGIN)} command,
-    eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN} https://contoso.sharepoint.com`)}.
-
     When adding an app to the tenant app catalog, it's not necessary to specify
     the tenant app catalog URL. When the URL is not specified, the CLI will
     try to resolve the URL itself. Specifying the app catalog URL is required

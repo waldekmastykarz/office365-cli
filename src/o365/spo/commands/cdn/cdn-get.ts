@@ -1,4 +1,3 @@
-import auth from '../../../../Auth';
 import { ContextInfo, ClientSvcResponse, ClientSvcResponseContents } from '../../spo';
 import config from '../../../../config';
 import request from '../../../../request';
@@ -34,10 +33,6 @@ class SpoCdnGetCommand extends SpoCommand {
     const telemetryProps: any = super.getTelemetryProperties(args);
     telemetryProps.cdnType = args.options.type || 'Public';
     return telemetryProps;
-  }
-
-  protected requiresTenantAdmin(): boolean {
-    return true;
   }
 
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: (err?: any) => void): void {
@@ -118,18 +113,14 @@ class SpoCdnGetCommand extends SpoCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(commands.CDN_GET).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to a SharePoint Online tenant admin site,
-  using the ${chalk.blue(commands.LOGIN)} command.
+      `  ${chalk.yellow('Important:')} to use this command you have to have permissions to access
+    the tenant admin site.
         
   Remarks:
 
-    To view the status of an Office 365 CDN, you have to first log in to a tenant admin site using the
-    ${chalk.blue(commands.LOGIN)} command, eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN} https://contoso-admin.sharepoint.com`)}.
-    If you are logged in to a different site and will try to manage tenant properties,
-    you will get an error.
-
-    Using the ${chalk.blue('-t, --type')} option you can choose whether you want to manage the settings of
-    the Public (default) or Private CDN. If you don't use the option, the command will use the Public CDN.
+    Using the ${chalk.blue('-t, --type')} option you can choose whether you want to manage
+    the settings of the Public (default) or Private CDN. If you don't use
+    the option, the command will use the Public CDN.
 
   Examples:
   
@@ -137,7 +128,7 @@ class SpoCdnGetCommand extends SpoCommand {
       ${chalk.grey(config.delimiter)} ${commands.CDN_GET}
 
     Show if the Private CDN is currently enabled or not
-      ${chalk.grey(config.delimiter)} ${commands.CDN_GET} -t Private
+      ${chalk.grey(config.delimiter)} ${commands.CDN_GET} --type Private
 
   More information:
 

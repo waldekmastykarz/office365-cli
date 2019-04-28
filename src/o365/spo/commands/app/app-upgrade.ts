@@ -1,5 +1,3 @@
-import auth from '../../SpoAuth';
-import { Auth } from '../../../../Auth';
 import config from '../../../../config';
 import commands from '../../commands';
 import GlobalOptions from '../../../../GlobalOptions';
@@ -40,32 +38,20 @@ class SpoAppUpgradeCommand extends SpoCommand {
 
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
     const scope: string = (args.options.scope) ? args.options.scope.toLowerCase() : 'tenant';
-    const resource: string = Auth.getResourceFromUrl(args.options.siteUrl);
-    let siteAccessToken: string = '';
 
-    auth
-      .getAccessToken(resource, auth.service.refreshToken as string, cmd, this.debug)
-      .then((accessToken: string): Promise<void> => {
-        siteAccessToken = accessToken;
+    if (this.verbose) {
+      cmd.log(`Upgrading app '${args.options.id}' in site '${args.options.siteUrl}'...`);
+    }
 
-        if (this.debug) {
-          cmd.log(`Retrieved access token ${accessToken}.`);
-        }
+    const requestOptions: any = {
+      url: `${args.options.siteUrl}/_api/web/${scope}appcatalog/AvailableApps/GetById('${encodeURIComponent(args.options.id)}')/upgrade`,
+      headers: {
+        accept: 'application/json;odata=nometadata'
+      }
+    };
 
-        if (this.verbose) {
-          cmd.log(`Upgrading app '${args.options.id}' in site '${args.options.siteUrl}'...`);
-        }
-
-        const requestOptions: any = {
-          url: `${args.options.siteUrl}/_api/web/${scope}appcatalog/AvailableApps/GetById('${encodeURIComponent(args.options.id)}')/upgrade`,
-          headers: {
-            authorization: `Bearer ${siteAccessToken}`,
-            accept: 'application/json;odata=nometadata'
-          }
-        };
-
-        return request.post(requestOptions);
-      })
+    request
+      .post(requestOptions)
       .then((): void => {
         if (this.verbose) {
           cmd.log(vorpal.chalk.green('DONE'));
@@ -116,7 +102,7 @@ class SpoAppUpgradeCommand extends SpoCommand {
       if (!args.options.siteUrl) {
         return 'Required parameter siteUrl missing';
       }
-      
+
       return SpoCommand.isValidSharePointUrl(args.options.siteUrl);
     };
   }
@@ -125,15 +111,8 @@ class SpoAppUpgradeCommand extends SpoCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(commands.APP_UPGRADE).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to a SharePoint Online site,
-      using the ${chalk.blue(commands.LOGIN)} command.
-
-  Remarks:
+      `  Remarks:
   
-    To upgrade an app in the site, you have to first log in to a SharePoint site
-    using the ${chalk.blue(commands.LOGIN)} command,
-    eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN} https://contoso.sharepoint.com`)}.
-
     If the app with the specified ID doesn't exist in the app catalog,
     the command will fail with an error.
  

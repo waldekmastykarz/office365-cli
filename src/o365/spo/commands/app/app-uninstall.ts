@@ -1,5 +1,3 @@
-import auth from '../../SpoAuth';
-import { Auth } from '../../../../Auth';
 import config from '../../../../config';
 import commands from '../../commands';
 import GlobalOptions from '../../../../GlobalOptions';
@@ -43,32 +41,20 @@ class SpoAppUninstallCommand extends SpoCommand {
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
     const uninstallApp: () => void = (): void => {
       const scope: string = (args.options.scope) ? args.options.scope.toLowerCase() : 'tenant';
-      const resource: string = Auth.getResourceFromUrl(args.options.siteUrl);
-      let siteAccessToken: string = '';
 
-      auth
-        .getAccessToken(resource, auth.service.refreshToken as string, cmd, this.debug)
-        .then((accessToken: string): Promise<void> => {
-          siteAccessToken = accessToken;
+      if (this.verbose) {
+        cmd.log(`Uninstalling app '${args.options.id}' from the site '${args.options.siteUrl}'...`);
+      }
 
-          if (this.debug) {
-            cmd.log(`Retrieved access token ${accessToken}. `);
-          }
+      const requestOptions: any = {
+        url: `${args.options.siteUrl}/_api/web/${scope}appcatalog/AvailableApps/GetById('${encodeURIComponent(args.options.id)}')/uninstall`,
+        headers: {
+          accept: 'application/json;odata=nometadata'
+        }
+      };
 
-          if (this.verbose) {
-            cmd.log(`Uninstalling app '${args.options.id}' from the site '${args.options.siteUrl}'...`);
-          }
-
-          const requestOptions: any = {
-            url: `${args.options.siteUrl}/_api/web/${scope}appcatalog/AvailableApps/GetById('${encodeURIComponent(args.options.id)}')/uninstall`,
-            headers: {
-              authorization: `Bearer ${siteAccessToken}`,
-              accept: 'application/json;odata=nometadata'
-            }
-          };
-
-          return request.post(requestOptions);
-        })
+      request
+        .post(requestOptions)
         .then((): void => {
           if (this.verbose) {
             cmd.log(vorpal.chalk.green('DONE'));
@@ -143,7 +129,7 @@ class SpoAppUninstallCommand extends SpoCommand {
       if (!args.options.siteUrl) {
         return 'Required parameter siteUrl missing';
       }
-      
+
       return SpoCommand.isValidSharePointUrl(args.options.siteUrl);
     };
   }
@@ -152,15 +138,8 @@ class SpoAppUninstallCommand extends SpoCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(commands.APP_UNINSTALL).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to a SharePoint Online site,
-    using the ${chalk.blue(commands.LOGIN)} command.
-
-  Remarks:
+      `  Remarks:
   
-    To uninstall an app from the site, you have to first log in to a SharePoint
-    site using the ${chalk.blue(commands.LOGIN)} command,
-    eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN} https://contoso.sharepoint.com`)}.
-
     If the app with the specified ID doesn't exist in the app catalog,
     the command will fail with an error.
    

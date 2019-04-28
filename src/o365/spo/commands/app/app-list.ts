@@ -1,4 +1,3 @@
-import auth from '../../../../Auth';
 import config from '../../../../config';
 import commands from '../../commands';
 import request from '../../../../request';
@@ -28,10 +27,6 @@ class SpoAppListCommand extends SpoAppBaseCommand {
 
   public get description(): string {
     return 'Lists apps from the specified app catalog';
-  }
-
-  protected requiresTenantAdmin(): boolean {
-    return false;
   }
 
   public getTelemetryProperties(args: CommandArgs): any {
@@ -138,14 +133,7 @@ class SpoAppListCommand extends SpoAppBaseCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(commands.APP_LIST).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to a SharePoint Online site, using
-    the ${chalk.blue(commands.LOGIN)} command.
-
-  Remarks:
-
-    To list apps from the specified app catalog, you have to first log in
-    to a SharePoint site using the ${chalk.blue(commands.LOGIN)} command,
-    eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN} https://contoso.sharepoint.com`)}.
+      `  Remarks:
 
     When listing information about apps available in the tenant app catalog,
     it's not necessary to specify the tenant app catalog URL. When the URL

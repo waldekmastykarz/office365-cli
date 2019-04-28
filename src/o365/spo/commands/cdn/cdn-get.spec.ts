@@ -3,7 +3,7 @@ import Command, { CommandValidate, CommandOption, CommandError } from '../../../
 import config from '../../../../config';
 import * as sinon from 'sinon';
 import appInsights from '../../../../appInsights';
-import auth, { Site } from '../../SpoAuth';
+import auth from '../../../../Auth';
 const command: Command = require('./cdn-get');
 import * as assert from 'assert';
 import request from '../../../../request';
@@ -13,31 +13,30 @@ describe(commands.CDN_GET, () => {
   let vorpal: Vorpal;
   let log: any[];
   let cmdInstance: any;
-  let trackEvent: any;
-  let telemetry: any;
 
   before(() => {
     sinon.stub(auth, 'restoreAuth').callsFake(() => Promise.resolve());
-    sinon.stub(auth, 'ensureAccessToken').callsFake(() => { return Promise.resolve('ABC'); });
-    trackEvent = sinon.stub(appInsights, 'trackEvent').callsFake((t) => {
-      telemetry = t;
-    });
+    auth.service.connected = true;
+    auth.service.spoUrl = 'https://contoso.sharepoint.com';
+    auth.service.tenantId = 'abc';
   });
 
   beforeEach(() => {
     vorpal = require('../../../../vorpal-init');
     log = [];
     cmdInstance = {
+      action: command.action(),
       log: (msg: string) => {
         log.push(msg);
       }
     };
-    auth.site = new Site();
-    telemetry = null;
   });
 
   afterEach(() => {
-    Utils.restore(vorpal.find);
+    Utils.restore([
+      vorpal.find,
+      request.post
+    ]);
   });
 
   after(() => {
@@ -46,6 +45,9 @@ describe(commands.CDN_GET, () => {
       auth.ensureAccessToken,
       auth.restoreAuth
     ]);
+    auth.service.connected = false;
+    auth.service.spoUrl = undefined;
+    auth.service.tenantId = undefined;
   });
 
   it('has correct name', () => {
@@ -56,78 +58,17 @@ describe(commands.CDN_GET, () => {
     assert.notEqual(command.description, null);
   });
 
-  it('calls telemetry', (done) => {
-    cmdInstance.action = command.action();
-    cmdInstance.action({ options: {}, appCatalogUrl: 'https://contoso-admin.sharepoint.com' }, () => {
-      try {
-        assert(trackEvent.called);
-        done();
-      }
-      catch (e) {
-        done(e);
-      }
-    });
-  });
-
-  it('logs correct telemetry event', (done) => {
-    cmdInstance.action = command.action();
-    cmdInstance.action({ options: {}, appCatalogUrl: 'https://contoso-admin.sharepoint.com' }, () => {
-      try {
-        assert.equal(telemetry.name, commands.CDN_GET);
-        done();
-      }
-      catch (e) {
-        done(e);
-      }
-    });
-  });
-
-  it('aborts when not logged in to a SharePoint site', (done) => {
-    auth.site = new Site();
-    auth.site.connected = false;
-    cmdInstance.action = command.action();
-    cmdInstance.action({ options: { debug: true }, appCatalogUrl: 'https://contoso.sharepoint.com/sites/appcatalog' }, (err?: any) => {
-      try {
-        assert.equal(JSON.stringify(err), JSON.stringify(new CommandError('Log in to a SharePoint Online site first')));
-        done();
-      }
-      catch (e) {
-        done(e);
-      }
-    });
-  });
-
-  it('aborts when not logged to a SharePoint tenant admin site', (done) => {
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
-    cmdInstance.action({ options: { debug: true }, appCatalogUrl: 'https://contoso.sharepoint.com/sites/appcatalog' }, (err?: any) => {
-      try {
-        assert.equal(JSON.stringify(err), JSON.stringify(new CommandError(`https://contoso.sharepoint.com is not a tenant admin site. Log in to your tenant admin site and try again`)));
-        done();
-      }
-      catch (e) {
-        done(e);
-      }
-    });
-  });
-
   it('retrieves the settings of the public CDN when type set to Public', (done) => {
     sinon.stub(request, 'post').callsFake((opts) => {
       if (opts.url.indexOf('/_api/contextinfo') > -1) {
-        if (opts.headers.authorization &&
-          opts.headers.authorization.indexOf('Bearer ') === 0 &&
-          opts.headers.accept &&
+        if (opts.headers.accept &&
           opts.headers.accept.indexOf('application/json') === 0) {
           return Promise.resolve({ FormDigestValue: 'abc' });
         }
       }
 
       if (opts.url.indexOf(`/_vti_bin/client.svc/ProcessQuery`) > -1) {
-        if (opts.headers.authorization &&
-          opts.headers.authorization.indexOf('Bearer ') === 0 &&
-          opts.headers['X-RequestDigest'] &&
+        if (opts.headers['X-RequestDigest'] &&
           opts.headers['X-RequestDigest'] === 'abc' &&
           opts.body === `<Request AddExpandoFieldTypeSuffix="true" SchemaVersion="15.0.0.0" LibraryVersion="16.0.0.0" ApplicationName="${config.applicationName}" xmlns="http://schemas.microsoft.com/sharepoint/clientquery/2009"><Actions><Method Name="GetTenantCdnEnabled" Id="12" ObjectPathId="8"><Parameters><Parameter Type="Enum">0</Parameter></Parameters></Method></Actions><ObjectPaths><Identity Id="8" Name="abc" /></ObjectPaths></Request>`) {
           return Promise.resolve(JSON.stringify([{"SchemaVersion":"15.0.0.0","LibraryVersion":"16.0.7025.1207","ErrorInfo":null,"TraceCorrelationId":"3d92299e-e019-4000-c866-de7d45aa9628"},12,true]));
@@ -137,11 +78,6 @@ describe(commands.CDN_GET, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso-admin.sharepoint.com';
-    auth.site.tenantId = 'abc';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: true, type: 'Public' } }, () => {
       let correctLogStatement = false;
       log.forEach(l => {
@@ -160,27 +96,20 @@ describe(commands.CDN_GET, () => {
       catch (e) {
         done(e);
       }
-      finally {
-        Utils.restore(request.post);
-      }
     });
   });
 
   it('retrieves the settings of the private CDN when type set to Private', (done) => {
     sinon.stub(request, 'post').callsFake((opts) => {
       if (opts.url.indexOf('/_api/contextinfo') > -1) {
-        if (opts.headers.authorization &&
-          opts.headers.authorization.indexOf('Bearer ') === 0 &&
-          opts.headers.accept &&
+        if (opts.headers.accept &&
           opts.headers.accept.indexOf('application/json') === 0) {
           return Promise.resolve({ FormDigestValue: 'abc' });
         }
       }
 
       if (opts.url.indexOf(`/_vti_bin/client.svc/ProcessQuery`) > -1) {
-        if (opts.headers.authorization &&
-          opts.headers.authorization.indexOf('Bearer ') === 0 &&
-          opts.headers['X-RequestDigest'] &&
+        if (opts.headers['X-RequestDigest'] &&
           opts.headers['X-RequestDigest'] === 'abc' &&
           opts.body === `<Request AddExpandoFieldTypeSuffix="true" SchemaVersion="15.0.0.0" LibraryVersion="16.0.0.0" ApplicationName="${config.applicationName}" xmlns="http://schemas.microsoft.com/sharepoint/clientquery/2009"><Actions><Method Name="GetTenantCdnEnabled" Id="12" ObjectPathId="8"><Parameters><Parameter Type="Enum">1</Parameter></Parameters></Method></Actions><ObjectPaths><Identity Id="8" Name="abc" /></ObjectPaths></Request>`) {
           return Promise.resolve(JSON.stringify([{"SchemaVersion":"15.0.0.0","LibraryVersion":"16.0.7025.1207","ErrorInfo":null,"TraceCorrelationId":"3d92299e-e019-4000-c866-de7d45aa9628"},12,false]));
@@ -190,11 +119,6 @@ describe(commands.CDN_GET, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso-admin.sharepoint.com';
-    auth.site.tenantId = 'abc';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: false, type: 'Private' } }, () => {
       let correctLogStatement = false;
       log.forEach(l => {
@@ -209,27 +133,20 @@ describe(commands.CDN_GET, () => {
       catch (e) {
         done(e);
       }
-      finally {
-        Utils.restore(request.post);
-      }
     });
   });
 
   it('retrieves the settings of the private CDN when type set to Private (debug)', (done) => {
     sinon.stub(request, 'post').callsFake((opts) => {
       if (opts.url.indexOf('/_api/contextinfo') > -1) {
-        if (opts.headers.authorization &&
-          opts.headers.authorization.indexOf('Bearer ') === 0 &&
-          opts.headers.accept &&
+        if (opts.headers.accept &&
           opts.headers.accept.indexOf('application/json') === 0) {
           return Promise.resolve({ FormDigestValue: 'abc' });
         }
       }
 
       if (opts.url.indexOf(`/_vti_bin/client.svc/ProcessQuery`) > -1) {
-        if (opts.headers.authorization &&
-          opts.headers.authorization.indexOf('Bearer ') === 0 &&
-          opts.headers['X-RequestDigest'] &&
+        if (opts.headers['X-RequestDigest'] &&
           opts.headers['X-RequestDigest'] === 'abc' &&
           opts.body === `<Request AddExpandoFieldTypeSuffix="true" SchemaVersion="15.0.0.0" LibraryVersion="16.0.0.0" ApplicationName="${config.applicationName}" xmlns="http://schemas.microsoft.com/sharepoint/clientquery/2009"><Actions><Method Name="GetTenantCdnEnabled" Id="12" ObjectPathId="8"><Parameters><Parameter Type="Enum">1</Parameter></Parameters></Method></Actions><ObjectPaths><Identity Id="8" Name="abc" /></ObjectPaths></Request>`) {
           return Promise.resolve(JSON.stringify([{"SchemaVersion":"15.0.0.0","LibraryVersion":"16.0.7025.1207","ErrorInfo":null,"TraceCorrelationId":"3d92299e-e019-4000-c866-de7d45aa9628"},12,false]));
@@ -239,11 +156,6 @@ describe(commands.CDN_GET, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso-admin.sharepoint.com';
-    auth.site.tenantId = 'abc';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: true, type: 'Private' } }, () => {
       let correctLogStatement = false;
       log.forEach(l => {
@@ -262,27 +174,20 @@ describe(commands.CDN_GET, () => {
       catch (e) {
         done(e);
       }
-      finally {
-        Utils.restore(request.post);
-      }
     });
   });
 
   it('retrieves the settings of the public CDN when no type set', (done) => {
     sinon.stub(request, 'post').callsFake((opts) => {
       if (opts.url.indexOf('/_api/contextinfo') > -1) {
-        if (opts.headers.authorization &&
-          opts.headers.authorization.indexOf('Bearer ') === 0 &&
-          opts.headers.accept &&
+        if (opts.headers.accept &&
           opts.headers.accept.indexOf('application/json') === 0) {
           return Promise.resolve({ FormDigestValue: 'abc' });
         }
       }
 
       if (opts.url.indexOf(`/_vti_bin/client.svc/ProcessQuery`) > -1) {
-        if (opts.headers.authorization &&
-          opts.headers.authorization.indexOf('Bearer ') === 0 &&
-          opts.headers['X-RequestDigest'] &&
+        if (opts.headers['X-RequestDigest'] &&
           opts.headers['X-RequestDigest'] === 'abc' &&
           opts.body === `<Request AddExpandoFieldTypeSuffix="true" SchemaVersion="15.0.0.0" LibraryVersion="16.0.0.0" ApplicationName="${config.applicationName}" xmlns="http://schemas.microsoft.com/sharepoint/clientquery/2009"><Actions><Method Name="GetTenantCdnEnabled" Id="12" ObjectPathId="8"><Parameters><Parameter Type="Enum">0</Parameter></Parameters></Method></Actions><ObjectPaths><Identity Id="8" Name="abc" /></ObjectPaths></Request>`) {
           return Promise.resolve(JSON.stringify([{"SchemaVersion":"15.0.0.0","LibraryVersion":"16.0.7025.1207","ErrorInfo":null,"TraceCorrelationId":"3d92299e-e019-4000-c866-de7d45aa9628"},12,true]));
@@ -292,11 +197,6 @@ describe(commands.CDN_GET, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso-admin.sharepoint.com';
-    auth.site.tenantId = 'abc';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: true } }, () => {
       let correctLogStatement = false;
       log.forEach(l => {
@@ -315,9 +215,6 @@ describe(commands.CDN_GET, () => {
       catch (e) {
         done(e);
       }
-      finally {
-        Utils.restore(request.post);
-      }
     });
   });
 
@@ -325,18 +222,14 @@ describe(commands.CDN_GET, () => {
     Utils.restore(request.post);
     sinon.stub(request, 'post').callsFake((opts) => {
       if (opts.url.indexOf('/_api/contextinfo') > -1) {
-        if (opts.headers.authorization &&
-          opts.headers.authorization.indexOf('Bearer ') === 0 &&
-          opts.headers.accept &&
+        if (opts.headers.accept &&
           opts.headers.accept.indexOf('application/json') === 0) {
           return Promise.resolve({ FormDigestValue: 'abc' });
         }
       }
 
       if (opts.url.indexOf('/_vti_bin/client.svc/ProcessQuery') > -1) {
-        if (opts.headers.authorization &&
-          opts.headers.authorization.indexOf('Bearer ') === 0 &&
-          opts.headers['X-RequestDigest'] &&
+        if (opts.headers['X-RequestDigest'] &&
           opts.body) {
           if (opts.body === `<Request AddExpandoFieldTypeSuffix="true" SchemaVersion="15.0.0.0" LibraryVersion="16.0.0.0" ApplicationName="${config.applicationName}" xmlns="http://schemas.microsoft.com/sharepoint/clientquery/2009"><Actions><Method Name="GetTenantCdnEnabled" Id="12" ObjectPathId="8"><Parameters><Parameter Type="Enum">0</Parameter></Parameters></Method></Actions><ObjectPaths><Identity Id="8" Name="abc" /></ObjectPaths></Request>`) {
             return Promise.resolve(JSON.stringify([
@@ -353,11 +246,6 @@ describe(commands.CDN_GET, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso-admin.sharepoint.com';
-    auth.site.tenantId = 'abc';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: true } }, (err?: any) => {
       try {
         assert.equal(err.message, 'An error has occurred');
@@ -366,8 +254,22 @@ describe(commands.CDN_GET, () => {
       catch (e) {
         done(e);
       }
-      finally {
-        Utils.restore(request.post);
+    });
+  });
+
+  it('correctly handles random API error', (done) => {
+    Utils.restore(request.post);
+    sinon.stub(request, 'post').callsFake((opts) => {
+      return Promise.reject('An error has occurred');
+    });
+
+    cmdInstance.action({ options: { debug: false } }, (err?: any) => {
+      try {
+        assert.equal(JSON.stringify(err), JSON.stringify(new CommandError('An error has occurred')));
+        done();
+      }
+      catch (e) {
+        done(e);
       }
     });
   });
@@ -454,23 +356,5 @@ describe(commands.CDN_GET, () => {
     });
     Utils.restore(vorpal.find);
     assert(containsExamples);
-  });
-
-  it('correctly handles lack of valid access token', (done) => {
-    Utils.restore(auth.ensureAccessToken);
-    sinon.stub(auth, 'ensureAccessToken').callsFake(() => { return Promise.reject(new Error('Error getting access token')); });
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso-admin.sharepoint.com';
-    cmdInstance.action = command.action();
-    cmdInstance.action({ options: { debug: true }, appCatalogUrl: 'https://contoso-admin.sharepoint.com' }, (err?: any) => {
-      try {
-        assert.equal(JSON.stringify(err), JSON.stringify(new CommandError('Error getting access token')));
-        done();
-      }
-      catch (e) {
-        done(e);
-      }
-    });
   });
 });
