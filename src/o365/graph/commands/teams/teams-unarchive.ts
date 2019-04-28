@@ -1,5 +1,4 @@
 import request from '../../../../request';
-import auth from '../../GraphAuth';
 import Utils from '../../../../Utils';
 import config from '../../../../config';
 import commands from '../../commands';
@@ -27,23 +26,19 @@ class GraphTeamsUnarchiveCommand extends GraphCommand {
   }
 
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
-    const endpoint: string = `${auth.service.resource}/v1.0`;
+    const endpoint: string = `${this.resource}/v1.0`;
 
-    auth
-      .ensureAccessToken(auth.service.resource, cmd, this.debug)
-      .then((): Promise<void> => {
-        const requestOptions: any = {
-          url: `${endpoint}/teams/${encodeURIComponent(args.options.teamId)}/unarchive`,
-          headers: {
-            authorization: `Bearer ${auth.service.accessToken}`,
-            'content-type': 'application/json;odata=nometadata',
-            'accept': 'application/json;odata.metadata=none'
-          },
-          json: true
-        };
+    const requestOptions: any = {
+      url: `${endpoint}/teams/${encodeURIComponent(args.options.teamId)}/unarchive`,
+      headers: {
+        'content-type': 'application/json;odata=nometadata',
+        'accept': 'application/json;odata.metadata=none'
+      },
+      json: true
+    };
 
-        return request.post(requestOptions);
-      })
+    request
+      .post(requestOptions)
       .then((): void => {
         if (this.verbose) {
           cmd.log(vorpal.chalk.green('DONE'));
@@ -83,15 +78,8 @@ class GraphTeamsUnarchiveCommand extends GraphCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to the Microsoft Graph
-    using the ${chalk.blue(commands.LOGIN)} command.
+      `  Remarks:
           
-  Remarks:
-          
-    To restore an archived Microsoft Teams team, you have to first log in to
-    the Microsoft Graph using the ${chalk.blue(commands.LOGIN)} command,
-    eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN}`)}.
-
     This command supports admin permissions. Global admins and Microsoft Teams
     service admins can restore teams that they are not a member of.
 

@@ -1,4 +1,3 @@
-import auth from '../../GraphAuth';
 import config from '../../../../config';
 import commands from '../../commands';
 import GlobalOptions from '../../../../GlobalOptions';
@@ -68,7 +67,7 @@ class GraphTeamsUserListCommand extends GraphItemsListCommand<GroupUser> {
   }
 
   private getOwners(cmd: CommandInstance, teamId: string): Promise<void> {
-    const endpoint: string = `${auth.service.resource}/v1.0/groups/${teamId}/owners?$select=id,displayName,userPrincipalName,userType`;
+    const endpoint: string = `${this.resource}/v1.0/groups/${teamId}/owners?$select=id,displayName,userPrincipalName,userType`;
 
     return this.getAllItems(endpoint, cmd, true).then((): void => {
       // Currently there is a bug in the Microsoft Graph that returns Owners as
@@ -80,7 +79,7 @@ class GraphTeamsUserListCommand extends GraphItemsListCommand<GroupUser> {
   }
 
   private getMembersAndGuests(cmd: CommandInstance, teamId: string): Promise<void> {
-    const endpoint: string = `${auth.service.resource}/v1.0/groups/${teamId}/members?$select=id,displayName,userPrincipalName,userType`;
+    const endpoint: string = `${this.resource}/v1.0/groups/${teamId}/members?$select=id,displayName,userPrincipalName,userType`;
     return this.getAllItems(endpoint, cmd, false);
   }
 
@@ -125,16 +124,7 @@ class GraphTeamsUserListCommand extends GraphItemsListCommand<GroupUser> {
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to the Microsoft Graph
-    using the ${chalk.blue(commands.LOGIN)} command.
-        
-  Remarks:
-
-    To list users in the specified Microsoft Teams team, you have to first
-    log in to the Microsoft Graph using the ${chalk.blue(commands.LOGIN)} command,
-    eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN}`)}.
-
-  Examples:
+      `  Examples:
   
     List all users and their role in the specified team 
       ${chalk.grey(config.delimiter)} ${this.name} --teamId '00000000-0000-0000-0000-000000000000'
