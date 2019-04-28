@@ -1,4 +1,3 @@
-import auth from '../../GraphAuth';
 import config from '../../../../config';
 import commands from '../../commands';
 import request from '../../../../request';
@@ -43,20 +42,16 @@ class GraphUserGetCommand extends GraphCommand {
       `?$select=${args.options.properties.split(',').map(p => encodeURIComponent(p.trim())).join(',')}` :
       '';
 
-    auth
-      .ensureAccessToken(auth.service.resource, cmd, this.debug)
-      .then((): Promise<{}> => {
-        const requestOptions: any = {
-          url: `${auth.service.resource}/v1.0/users/${encodeURIComponent(args.options.id ? args.options.id : args.options.userName as string)}${properties}`,
-          headers: {
-            authorization: `Bearer ${auth.service.accessToken}`,
-            accept: 'application/json;odata.metadata=none'
-          },
-          json: true
-        };
+    const requestOptions: any = {
+      url: `${this.resource}/v1.0/users/${encodeURIComponent(args.options.id ? args.options.id : args.options.userName as string)}${properties}`,
+      headers: {
+        accept: 'application/json;odata.metadata=none'
+      },
+      json: true
+    };
 
-        return request.get(requestOptions);
-      })
+    request
+      .get(requestOptions)
       .then((res: any): void => {
         cmd.log(res);
 
@@ -111,14 +106,7 @@ class GraphUserGetCommand extends GraphCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to the Microsoft Graph
-    using the ${chalk.blue(commands.LOGIN)} command.
-        
-  Remarks:
-
-    To get information about a user, you have to first log in to
-    the Microsoft Graph using the ${chalk.blue(commands.LOGIN)} command,
-    eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN}`)}.
+      `  Remarks:
 
     You can retrieve information about a user, either by specifying that user's
     id or user name (${chalk.grey(`userPrincipalName`)}), but not both.
