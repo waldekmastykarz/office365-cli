@@ -1,4 +1,3 @@
-import auth from '../../SpoAuth';
 import config from '../../../../config';
 import request from '../../../../request';
 import commands from '../../commands';
@@ -10,7 +9,6 @@ import {
 import SpoCommand from '../../SpoCommand';
 import Utils from '../../../../Utils';
 import { CustomAction } from './customaction';
-import { Auth } from '../../../../Auth';
 import { BasePermissions, PermissionKind } from './../../common/base-permissions';
 
 const vorpal: Vorpal = require('../../../../vorpal-init');
@@ -86,28 +84,17 @@ class SpoCustomActionSetCommand extends SpoCommand {
   }
 
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
-    const resource: string = Auth.getResourceFromUrl(args.options.url);
-    let siteAccessToken: string = '';
+    ((): Promise<CustomAction | undefined> => {
+      if (!args.options.scope) {
+        args.options.scope = 'All';
+      }
 
-    if (this.debug) {
-      cmd.log(`Retrieving access token for ${resource}...`);
-    }
+      if (args.options.scope.toLowerCase() !== "all") {
+        return this.updateCustomAction(args.options);
+      }
 
-    auth
-      .getAccessToken(resource, auth.service.refreshToken as string, cmd, this.debug)
-      .then((accessToken: string): Promise<CustomAction | undefined> => {
-        siteAccessToken = accessToken;
-
-        if (!args.options.scope) {
-          args.options.scope = 'All';
-        }
-
-        if (args.options.scope.toLowerCase() !== "all") {
-          return this.updateCustomAction(args.options, siteAccessToken, cmd);
-        }
-
-        return this.searchAllScopes(args.options, siteAccessToken, cmd);
-      })
+      return this.searchAllScopes(args.options);
+    })()
       .then((customAction: CustomAction | undefined): void => {
         if (this.verbose) {
           if (customAction && customAction["odata.null"] === true) {
@@ -265,15 +252,8 @@ class SpoCustomActionSetCommand extends SpoCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(commands.CUSTOMACTION_SET).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to a SharePoint Online site,
-        using the ${chalk.blue(commands.LOGIN)} command.
+      `  Remarks:
           
-  Remarks:
-          
-    To update custom action, you have to first log in to a SharePoint Online
-    site using the ${chalk.blue(commands.LOGIN)} command,
-    eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN} https://contoso.sharepoint.com`)}.
-
     Running this command from the Windows Command Shell (cmd.exe) or PowerShell
     for Windows OS XP, 7, 8, 8.1 without bash installed might require additional
     formatting for command options that have JSON, XML or JavaScript values,
@@ -333,13 +313,12 @@ class SpoCustomActionSetCommand extends SpoCommand {
       `);
   }
 
-  private updateCustomAction(options: Options, siteAccessToken: string, cmd: CommandInstance): Promise<undefined> {
+  private updateCustomAction(options: Options): Promise<undefined> {
     const requestBody: any = this.mapRequestBody(options);
 
     const requestOptions: any = {
       url: `${options.url}/_api/${options.scope}/UserCustomActions('${encodeURIComponent(options.id)}')`,
       headers: {
-        authorization: `Bearer ${siteAccessToken}`,
         accept: 'application/json;odata=nometadata',
         'X-HTTP-Method': 'MERGE'
       },
@@ -355,12 +334,12 @@ class SpoCustomActionSetCommand extends SpoCommand {
    * If custom action not found then 
    * another merge request is send with `site` scope.
    */
-  private searchAllScopes(options: Options, siteAccessToken: string, cmd: CommandInstance): Promise<CustomAction | undefined> {
+  private searchAllScopes(options: Options): Promise<CustomAction | undefined> {
     return new Promise<CustomAction>((resolve: (customAction: CustomAction | undefined) => void, reject: (error: any) => void): void => {
       options.scope = "Web";
 
       this
-        .updateCustomAction(options, siteAccessToken, cmd)
+        .updateCustomAction(options)
         .then((webResult: CustomAction | undefined): void => {
           if (webResult === undefined || webResult["odata.null"] !== true) {
             return resolve(webResult);
@@ -368,7 +347,7 @@ class SpoCustomActionSetCommand extends SpoCommand {
 
           options.scope = "Site";
           this
-            .updateCustomAction(options, siteAccessToken, cmd)
+            .updateCustomAction(options)
             .then((siteResult: CustomAction | undefined): void => {
               return resolve(siteResult);
             }, (err: any): void => {

@@ -2,8 +2,7 @@ import commands from '../../commands';
 import Command, { CommandValidate, CommandOption, CommandError } from '../../../../Command';
 import config from '../../../../config';
 import * as sinon from 'sinon';
-import appInsights from '../../../../appInsights';
-import auth, { Site } from '../../SpoAuth';
+import auth from '../../../../Auth';
 const command: Command = require('./field-set');
 import * as assert from 'assert';
 import request from '../../../../request';
@@ -14,29 +13,23 @@ describe(commands.FIELD_SET, () => {
   let log: any[];
   let cmdInstance: any;
   let cmdInstanceLogSpy: sinon.SinonSpy;
-  let trackEvent: any;
-  let telemetry: any;
 
   before(() => {
     sinon.stub(auth, 'restoreAuth').callsFake(() => Promise.resolve());
-    sinon.stub(auth, 'getAccessToken').callsFake(() => { return Promise.resolve('ABC'); });
-    sinon.stub(command as any, 'getRequestDigestForSite').callsFake(() => Promise.resolve({ FormDigestValue: 'ABC' }));
-    trackEvent = sinon.stub(appInsights, 'trackEvent').callsFake((t) => {
-      telemetry = t;
-    });
+    sinon.stub(command as any, 'getRequestDigest').callsFake(() => Promise.resolve({ FormDigestValue: 'ABC' }));
+    auth.service.connected = true;
   });
 
   beforeEach(() => {
     vorpal = require('../../../../vorpal-init');
     log = [];
     cmdInstance = {
+      action: command.action(),
       log: (msg: string) => {
         log.push(msg);
       }
     };
     cmdInstanceLogSpy = sinon.spy(cmdInstance, 'log');
-    auth.site = new Site();
-    telemetry = null;
   });
 
   afterEach(() => {
@@ -48,10 +41,9 @@ describe(commands.FIELD_SET, () => {
 
   after(() => {
     Utils.restore([
-      appInsights.trackEvent,
-      auth.getAccessToken,
       auth.restoreAuth
     ]);
+    auth.service.connected = false;
   });
 
   it('has correct name', () => {
@@ -62,53 +54,10 @@ describe(commands.FIELD_SET, () => {
     assert.notEqual(command.description, null);
   });
 
-  it('calls telemetry', (done) => {
-    cmdInstance.action = command.action();
-    cmdInstance.action({ options: {}, webUrl: 'https://contoso.sharepoint.com' }, () => {
-      try {
-        assert(trackEvent.called);
-        done();
-      }
-      catch (e) {
-        done(e);
-      }
-    });
-  });
-
-  it('logs correct telemetry event', (done) => {
-    cmdInstance.action = command.action();
-    cmdInstance.action({ options: {}, webUrl: 'https://contoso.sharepoint.com' }, () => {
-      try {
-        assert.equal(telemetry.name, commands.FIELD_SET);
-        done();
-      }
-      catch (e) {
-        done(e);
-      }
-    });
-  });
-
-  it('aborts when not logged in to a SharePoint site', (done) => {
-    auth.site = new Site();
-    auth.site.connected = false;
-    cmdInstance.action = command.action();
-    cmdInstance.action({ options: { debug: true }, webUrl: 'https://contoso.sharepoint.com' }, (err?: any) => {
-      try {
-        assert.equal(JSON.stringify(err), JSON.stringify(new CommandError('Log in to a SharePoint Online site first')));
-        done();
-      }
-      catch (e) {
-        done(e);
-      }
-    });
-  });
-
   it('updates site column specified by name', (done) => {
     sinon.stub(request, 'post').callsFake((opts) => {
       if (opts.url.indexOf(`/_vti_bin/client.svc/ProcessQuery`) > -1) {
-        if (!opts.headers.authorization ||
-          opts.headers.authorization.indexOf('Bearer ') !== 0 ||
-          opts.headers['X-RequestDigest'] !== 'ABC') {
+        if (opts.headers['X-RequestDigest'] !== 'ABC') {
           return Promise.reject('Invalid request');
         }
 
@@ -138,10 +87,6 @@ describe(commands.FIELD_SET, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: false, webUrl: 'https://contoso.sharepoint.com', name: 'MyColumn', Description: 'My column' } }, () => {
       try {
         assert(cmdInstanceLogSpy.notCalled);
@@ -156,9 +101,7 @@ describe(commands.FIELD_SET, () => {
   it('updates site column specified by id, pushing the changes to existing lists', (done) => {
     sinon.stub(request, 'post').callsFake((opts) => {
       if (opts.url.indexOf(`/_vti_bin/client.svc/ProcessQuery`) > -1) {
-        if (!opts.headers.authorization ||
-          opts.headers.authorization.indexOf('Bearer ') !== 0 ||
-          opts.headers['X-RequestDigest'] !== 'ABC') {
+        if (opts.headers['X-RequestDigest'] !== 'ABC') {
           return Promise.reject('Invalid request');
         }
 
@@ -188,10 +131,6 @@ describe(commands.FIELD_SET, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: true, webUrl: 'https://contoso.sharepoint.com', id: '5d021339-4d62-4fe9-9d2a-c99bc56a157a', Description: 'My cool column', Title: 'My column', updateExistingLists: true } }, () => {
       try {
         assert(cmdInstanceLogSpy.calledWith(vorpal.chalk.green('DONE')));
@@ -206,9 +145,7 @@ describe(commands.FIELD_SET, () => {
   it('updates list column specified by id, list specified by id', (done) => {
     sinon.stub(request, 'post').callsFake((opts) => {
       if (opts.url.indexOf(`/_vti_bin/client.svc/ProcessQuery`) > -1) {
-        if (!opts.headers.authorization ||
-          opts.headers.authorization.indexOf('Bearer ') !== 0 ||
-          opts.headers['X-RequestDigest'] !== 'ABC') {
+        if (opts.headers['X-RequestDigest'] !== 'ABC') {
           return Promise.reject('Invalid request');
         }
 
@@ -253,10 +190,6 @@ describe(commands.FIELD_SET, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: false, webUrl: 'https://contoso.sharepoint.com', listId: '03cef05c-ba50-4dcf-a876-304f0626085c', id: '5d021339-4d62-4fe9-9d2a-c99bc56a157a', Description: 'My column' } }, () => {
       try {
         assert(cmdInstanceLogSpy.notCalled);
@@ -271,9 +204,7 @@ describe(commands.FIELD_SET, () => {
   it('updates list column specified by name, list specified by name', (done) => {
     sinon.stub(request, 'post').callsFake((opts) => {
       if (opts.url.indexOf(`/_vti_bin/client.svc/ProcessQuery`) > -1) {
-        if (!opts.headers.authorization ||
-          opts.headers.authorization.indexOf('Bearer ') !== 0 ||
-          opts.headers['X-RequestDigest'] !== 'ABC') {
+        if (opts.headers['X-RequestDigest'] !== 'ABC') {
           return Promise.reject('Invalid request');
         }
 
@@ -318,10 +249,6 @@ describe(commands.FIELD_SET, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: true, webUrl: 'https://contoso.sharepoint.com', listTitle: 'My List', name: 'MyColumn', Description: 'My column' } }, () => {
       try {
         assert(cmdInstanceLogSpy.calledWith(vorpal.chalk.green('DONE')));
@@ -336,9 +263,7 @@ describe(commands.FIELD_SET, () => {
   it('correctly escapes XML in list title', (done) => {
     sinon.stub(request, 'post').callsFake((opts) => {
       if (opts.url.indexOf(`/_vti_bin/client.svc/ProcessQuery`) > -1) {
-        if (!opts.headers.authorization ||
-          opts.headers.authorization.indexOf('Bearer ') !== 0 ||
-          opts.headers['X-RequestDigest'] !== 'ABC') {
+        if (opts.headers['X-RequestDigest'] !== 'ABC') {
           return Promise.reject('Invalid request');
         }
 
@@ -383,10 +308,6 @@ describe(commands.FIELD_SET, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: true, webUrl: 'https://contoso.sharepoint.com', listTitle: 'My List>', name: 'MyColumn', Description: 'My column' } }, () => {
       try {
         assert(cmdInstanceLogSpy.calledWith(vorpal.chalk.green('DONE')));
@@ -401,9 +322,7 @@ describe(commands.FIELD_SET, () => {
   it('correctly escapes XML in field name', (done) => {
     sinon.stub(request, 'post').callsFake((opts) => {
       if (opts.url.indexOf(`/_vti_bin/client.svc/ProcessQuery`) > -1) {
-        if (!opts.headers.authorization ||
-          opts.headers.authorization.indexOf('Bearer ') !== 0 ||
-          opts.headers['X-RequestDigest'] !== 'abc') {
+        if (opts.headers['X-RequestDigest'] !== 'abc') {
           return Promise.reject('Invalid request');
         }
 
@@ -433,10 +352,6 @@ describe(commands.FIELD_SET, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: false, webUrl: 'https://contoso.sharepoint.com', name: 'MyColumn>', Description: 'My column' } }, () => {
       try {
         assert(cmdInstanceLogSpy.notCalled);
@@ -451,9 +366,7 @@ describe(commands.FIELD_SET, () => {
   it('correctly escapes XML in field properties', (done) => {
     sinon.stub(request, 'post').callsFake((opts) => {
       if (opts.url.indexOf(`/_vti_bin/client.svc/ProcessQuery`) > -1) {
-        if (!opts.headers.authorization ||
-          opts.headers.authorization.indexOf('Bearer ') !== 0 ||
-          opts.headers['X-RequestDigest'] !== 'abc') {
+        if (opts.headers['X-RequestDigest'] !== 'abc') {
           return Promise.reject('Invalid request');
         }
 
@@ -483,10 +396,6 @@ describe(commands.FIELD_SET, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: false, webUrl: 'https://contoso.sharepoint.com', name: 'MyColumn', Description: 'My column>' } }, () => {
       try {
         assert(cmdInstanceLogSpy.notCalled);
@@ -501,9 +410,7 @@ describe(commands.FIELD_SET, () => {
   it('correctly handles an error when the field specified by id doesn\'t exist', (done) => {
     sinon.stub(request, 'post').callsFake((opts) => {
       if (opts.url.indexOf(`/_vti_bin/client.svc/ProcessQuery`) > -1) {
-        if (!opts.headers.authorization ||
-          opts.headers.authorization.indexOf('Bearer ') !== 0 ||
-          opts.headers['X-RequestDigest'] !== 'ABC') {
+        if (opts.headers['X-RequestDigest'] !== 'ABC') {
           return Promise.reject('Invalid request');
         }
 
@@ -526,10 +433,6 @@ describe(commands.FIELD_SET, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: true, webUrl: 'https://contoso.sharepoint.com', id: '5d021339-4d62-4fe9-9d2a-c99bc56a157a', Description: 'My cool column', Title: 'My column', updateExistingLists: true } }, (err?: any) => {
       try {
         assert.equal(JSON.stringify(err), JSON.stringify(new CommandError(`Invalid field name. {5d021339-4d62-4fe9-9d2a-c99bc56a157a} https:\u002f\u002fcontoso.sharepoint.com `)));
@@ -544,9 +447,7 @@ describe(commands.FIELD_SET, () => {
   it('correctly handles an error when the field specified by title doesn\'t exist', (done) => {
     sinon.stub(request, 'post').callsFake((opts) => {
       if (opts.url.indexOf(`/_vti_bin/client.svc/ProcessQuery`) > -1) {
-        if (!opts.headers.authorization ||
-          opts.headers.authorization.indexOf('Bearer ') !== 0 ||
-          opts.headers['X-RequestDigest'] !== 'ABC') {
+        if (opts.headers['X-RequestDigest'] !== 'ABC') {
           return Promise.reject('Invalid request');
         }
 
@@ -569,10 +470,6 @@ describe(commands.FIELD_SET, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: false, webUrl: 'https://contoso.sharepoint.com', name: 'MyColumn', Description: 'My column' } }, (err?: any) => {
       try {
         assert.equal(JSON.stringify(err), JSON.stringify(new CommandError(`Column 'MyColumn' does not exist. It may have been deleted by another user.`)));
@@ -587,9 +484,7 @@ describe(commands.FIELD_SET, () => {
   it('correctly handles an error when the list specified by id doesn\'t exist', (done) => {
     sinon.stub(request, 'post').callsFake((opts) => {
       if (opts.url.indexOf(`/_vti_bin/client.svc/ProcessQuery`) > -1) {
-        if (!opts.headers.authorization ||
-          opts.headers.authorization.indexOf('Bearer ') !== 0 ||
-          opts.headers['X-RequestDigest'] !== 'ABC') {
+        if (opts.headers['X-RequestDigest'] !== 'ABC') {
           return Promise.reject('Invalid request');
         }
 
@@ -612,10 +507,6 @@ describe(commands.FIELD_SET, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: false, webUrl: 'https://contoso.sharepoint.com', listId: '03cef05c-ba50-4dcf-a876-304f0626085c', id: '5d021339-4d62-4fe9-9d2a-c99bc56a157a', Description: 'My column' } }, (err?: any) => {
       try {
         assert.equal(JSON.stringify(err), JSON.stringify(new CommandError(`List does not exist.\n\nThe page you selected contains a list that does not exist.  It may have been deleted by another user.`)));
@@ -630,9 +521,7 @@ describe(commands.FIELD_SET, () => {
   it('correctly handles an error when the list specified by title doesn\'t exist', (done) => {
     sinon.stub(request, 'post').callsFake((opts) => {
       if (opts.url.indexOf(`/_vti_bin/client.svc/ProcessQuery`) > -1) {
-        if (!opts.headers.authorization ||
-          opts.headers.authorization.indexOf('Bearer ') !== 0 ||
-          opts.headers['X-RequestDigest'] !== 'ABC') {
+        if (opts.headers['X-RequestDigest'] !== 'ABC') {
           return Promise.reject('Invalid request');
         }
 
@@ -655,10 +544,6 @@ describe(commands.FIELD_SET, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: true, webUrl: 'https://contoso.sharepoint.com', listTitle: 'My List', name: 'MyColumn', Description: 'My column' } }, (err?: any) => {
       try {
         assert.equal(JSON.stringify(err), JSON.stringify(new CommandError(`List 'My List' does not exist at site with URL 'https:\u002f\u002fcontoso.sharepoint.com'.`)));
@@ -673,9 +558,7 @@ describe(commands.FIELD_SET, () => {
   it('correctly handles an error when updating the field failed', (done) => {
     sinon.stub(request, 'post').callsFake((opts) => {
       if (opts.url.indexOf(`/_vti_bin/client.svc/ProcessQuery`) > -1) {
-        if (!opts.headers.authorization ||
-          opts.headers.authorization.indexOf('Bearer ') !== 0 ||
-          opts.headers['X-RequestDigest'] !== 'ABC') {
+        if (opts.headers['X-RequestDigest'] !== 'ABC') {
           return Promise.reject('Invalid request');
         }
 
@@ -712,10 +595,6 @@ describe(commands.FIELD_SET, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: false, webUrl: 'https://contoso.sharepoint.com', name: 'MyColumn', Description: 'My column' } }, (err?: any) => {
       try {
         assert.equal(JSON.stringify(err), JSON.stringify(new CommandError(`An error has occurred`)));
@@ -825,23 +704,5 @@ describe(commands.FIELD_SET, () => {
     });
     Utils.restore(vorpal.find);
     assert(containsExamples);
-  });
-
-  it('correctly handles lack of valid access token', (done) => {
-    Utils.restore(auth.getAccessToken);
-    sinon.stub(auth, 'getAccessToken').callsFake(() => { return Promise.reject(new Error('Error getting access token')); });
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
-    cmdInstance.action({ options: { debug: true, webUrl: 'https://contoso.sharepoint.com' } }, (err?: any) => {
-      try {
-        assert.equal(JSON.stringify(err), JSON.stringify(new CommandError('Error getting access token')));
-        done();
-      }
-      catch (e) {
-        done(e);
-      }
-    });
   });
 });

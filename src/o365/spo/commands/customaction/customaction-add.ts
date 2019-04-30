@@ -1,4 +1,3 @@
-import auth from '../../SpoAuth';
 import config from '../../../../config';
 import request from '../../../../request';
 import commands from '../../commands';
@@ -10,7 +9,6 @@ import {
 import SpoCommand from '../../SpoCommand';
 import Utils from '../../../../Utils';
 import { CustomAction } from './customaction';
-import { Auth } from '../../../../Auth';
 import { BasePermissions, PermissionKind } from './../../common/base-permissions';
 
 const vorpal: Vorpal = require('../../../../vorpal-init');
@@ -85,36 +83,23 @@ class SpoCustomActionAddCommand extends SpoCommand {
   }
 
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
-    const resource: string = Auth.getResourceFromUrl(args.options.url);
-    let siteAccessToken: string = '';
-
-    if (this.debug) {
-      cmd.log(`Retrieving access token for ${resource}...`);
+    if (!args.options.scope) {
+      args.options.scope = 'Web';
     }
 
-    auth
-      .getAccessToken(resource, auth.service.refreshToken as string, cmd, this.debug)
-      .then((accessToken: string): Promise<CustomAction> => {
-        siteAccessToken = accessToken;
+    const requestBody: any = this.mapRequestBody(args.options);
 
-        if (!args.options.scope) {
-          args.options.scope = 'Web';
-        }
+    const requestOptions: any = {
+      url: `${args.options.url}/_api/${args.options.scope}/UserCustomActions`,
+      headers: {
+        accept: 'application/json;odata=nometadata'
+      },
+      body: requestBody,
+      json: true
+    };
 
-        const requestBody: any = this.mapRequestBody(args.options);
-
-        const requestOptions: any = {
-          url: `${args.options.url}/_api/${args.options.scope}/UserCustomActions`,
-          headers: {
-            authorization: `Bearer ${siteAccessToken}`,
-            accept: 'application/json;odata=nometadata'
-          },
-          body: requestBody,
-          json: true
-        };
-
-        return request.post(requestOptions);
-      })
+    request
+      .post<CustomAction>(requestOptions)
       .then((customAction: CustomAction): void => {
         if (this.verbose) {
           cmd.log({
@@ -318,14 +303,8 @@ class SpoCustomActionAddCommand extends SpoCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(commands.CUSTOMACTION_ADD).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to a SharePoint Online site,
-        using the ${chalk.blue(commands.LOGIN)} command.
+      `  Remarks:
           
-  Remarks:
-          
-    To create custom action, you have to first log in to a SharePoint Online site using the
-    ${chalk.blue(commands.LOGIN)} command, eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN} https://contoso.sharepoint.com`)}.
-
     Running this command from the Windows Command Shell (cmd.exe) or PowerShell for Windows OS XP,
     7, 8, 8.1 without bash installed might require additional formatting for command options that have
     JSON, XML or JavaScript values, because the command shell treat quotes differently. For example,
