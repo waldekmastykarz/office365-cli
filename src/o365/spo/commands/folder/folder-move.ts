@@ -1,4 +1,3 @@
-import auth from '../../SpoAuth';
 import config from '../../../../config';
 import commands from '../../commands';
 import GlobalOptions from '../../../../GlobalOptions';
@@ -8,7 +7,6 @@ import {
   CommandValidate
 } from '../../../../Command';
 import SpoCommand from '../../SpoCommand';
-import { Auth } from '../../../../Auth';
 import * as url from 'url';
 
 const vorpal: Vorpal = require('../../../../vorpal-init');
@@ -26,7 +24,6 @@ interface Options extends GlobalOptions {
 
 interface JobProgressOptions {
   webUrl: string;
-  accessToken: string;
   /**
    * Response object retrieved from /_api/site/CreateCopyJobs
    */
@@ -58,52 +55,35 @@ class SpoFolderMoveCommand extends SpoCommand {
   }
 
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
-    const resource: string = Auth.getResourceFromUrl(args.options.webUrl);
-    let siteAccessToken: string = '';
     const webUrl: string = args.options.webUrl;
     const parsedUrl: url.UrlWithStringQuery = url.parse(webUrl);
     const tenantUrl: string = `${parsedUrl.protocol}//${parsedUrl.hostname}`;
 
-    if (this.debug) {
-      cmd.log(`Retrieving access token for ${resource}...`);
-    }
-
-    auth
-      .getAccessToken(resource, auth.service.refreshToken as string, cmd, this.debug)
-      .then((accessToken: string): Promise<any> => {
-        if (this.debug) {
-          cmd.log(`Retrieved access token ${accessToken}.`);
+    const sourceAbsoluteUrl: string = this.urlCombine(webUrl, args.options.sourceUrl);
+    const allowSchemaMismatch: boolean = args.options.allowSchemaMismatch || false;
+    const requestUrl: string = this.urlCombine(webUrl, '/_api/site/CreateCopyJobs');
+    const requestOptions: any = {
+      url: requestUrl,
+      headers: {
+        'accept': 'application/json;odata=nometadata'
+      },
+      body: {
+        exportObjectUris: [sourceAbsoluteUrl],
+        destinationUri: this.urlCombine(tenantUrl, args.options.targetUrl),
+        options: {
+          "AllowSchemaMismatch": allowSchemaMismatch,
+          "IgnoreVersionHistory": true,
+          "IsMoveMode": true,
         }
+      },
+      json: true
+    };
 
-        siteAccessToken = accessToken;
-
-        const sourceAbsoluteUrl: string = this.urlCombine(webUrl, args.options.sourceUrl);
-        const allowSchemaMismatch: boolean = args.options.allowSchemaMismatch || false;
-        const requestUrl: string = this.urlCombine(webUrl, '/_api/site/CreateCopyJobs');
-        const requestOptions: any = {
-          url: requestUrl,
-          headers: {
-            authorization: `Bearer ${siteAccessToken}`,
-            'accept': 'application/json;odata=nometadata'
-          },
-          body: {
-            exportObjectUris: [sourceAbsoluteUrl],
-            destinationUri: this.urlCombine(tenantUrl, args.options.targetUrl),
-            options: {
-              "AllowSchemaMismatch": allowSchemaMismatch,
-              "IgnoreVersionHistory": true,
-              "IsMoveMode": true,
-            }
-          },
-          json: true
-        };
-
-        return request.post(requestOptions);
-      })
+    request
+      .post(requestOptions)
       .then((jobInfo: any): Promise<void> => {
         const jobProgressOptions: JobProgressOptions = {
           webUrl: webUrl,
-          accessToken: siteAccessToken,
           copyJopInfo: jobInfo.value[0],
           progressMaxPollAttempts: 1000, // 1 sec.
           progressPollInterval: 30 * 60, // approx. 30 mins. if interval is 1000
@@ -136,7 +116,6 @@ class SpoFolderMoveCommand extends SpoCommand {
       const requestOptions: any = {
         url: requestUrl,
         headers: {
-          authorization: `Bearer ${opts.accessToken}`,
           'accept': 'application/json;odata=nometadata'
         },
         body: { "copyJobInfo": opts.copyJopInfo },
@@ -280,14 +259,8 @@ class SpoFolderMoveCommand extends SpoCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to a SharePoint Online site,
-    using the ${chalk.blue(commands.LOGIN)} command.
+      `  Remarks:
   
-  Remarks:
-  
-    To move a folder, you have to first log in to SharePoint using the
-    ${chalk.blue(commands.LOGIN)} command, eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN} https://contoso.sharepoint.com`)}.
-
     When you move a folder with documents that have version history,
     all of the versions are being moved.
         

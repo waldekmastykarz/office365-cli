@@ -1,4 +1,3 @@
-import auth from '../../SpoAuth';
 import config from '../../../../config';
 import commands from '../../commands';
 import GlobalOptions from '../../../../GlobalOptions';
@@ -9,7 +8,6 @@ import {
 } from '../../../../Command';
 import SpoCommand from '../../SpoCommand';
 import Utils from '../../../../Utils';
-import { Auth } from '../../../../Auth';
 import * as fs from 'fs';
 import * as path from 'path';
 import { FolderExtensions } from '../folder/FolderExtensions';
@@ -77,47 +75,37 @@ class SpoFileAddCommand extends SpoCommand {
   }
 
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
-    const resource: string = Auth.getResourceFromUrl(args.options.webUrl);
     const folderPath: string = Utils.getServerRelativePath(args.options.webUrl, args.options.folder);
     const fullPath: string = path.resolve(args.options.path);
     const fileName: string = path.basename(fullPath);
     const folderExtensions: FolderExtensions = new FolderExtensions(cmd, this.debug);
 
-    let siteAccessToken: string = '';
     let isCheckedOut: boolean = false;
     let listSettings: ListSettings;
 
     if (this.debug) {
       cmd.log(`folder path: ${folderPath}...`);
-      cmd.log(`Retrieving access token for ${resource}...`);
     }
 
-    auth
-      .getAccessToken(resource, auth.service.refreshToken as string, cmd, this.debug)
-      .then((accessToken: string): Promise<void> => {
-        siteAccessToken = accessToken;
+    if (this.debug) {
+      cmd.log('Check if the specified folder exists.')
+      cmd.log('');
+    }
 
-        if (this.debug) {
-          cmd.log('Check if the specified folder exists.')
-          cmd.log('');
-        }
+    const requestOptions: any = {
+      url: `${args.options.webUrl}/_api/web/GetFolderByServerRelativeUrl('${encodeURIComponent(folderPath)}')`,
+      headers: {
+        'accept': 'application/json;odata=nometadata'
+      }
+    };
 
-        const requestOptions: any = {
-          url: `${args.options.webUrl}/_api/web/GetFolderByServerRelativeUrl('${encodeURIComponent(folderPath)}')`,
-          headers: {
-            authorization: `Bearer ${siteAccessToken}`,
-            'accept': 'application/json;odata=nometadata'
-          }
-        };
-
-        return request.get<void>(requestOptions).catch((err: string): Promise<void> => {
-          // folder does not exist so will attempt to create the folder tree
-          return folderExtensions.ensureFolder(args.options.webUrl, folderPath, siteAccessToken);
-        });
-      })
+    request.get<void>(requestOptions).catch((err: string): Promise<void> => {
+      // folder does not exist so will attempt to create the folder tree
+      return folderExtensions.ensureFolder(args.options.webUrl, folderPath);
+    })
       .then((): Promise<void> => {
         if (args.options.checkOut) {
-          return this.fileCheckOut(fileName, args.options.webUrl, folderPath, siteAccessToken, cmd)
+          return this.fileCheckOut(fileName, args.options.webUrl, folderPath)
             .then((res: any) => {
               // flag the file is checkedOut by the command 
               // so in case of command failure we can try check it in
@@ -144,7 +132,6 @@ class SpoFileAddCommand extends SpoCommand {
           url: `${args.options.webUrl}/_api/web/GetFolderByServerRelativeUrl('${encodeURIComponent(folderPath)}')/Files/Add(url='${encodeURIComponent(fileName)}', overwrite=true)`,
           body: fileBody,
           headers: {
-            authorization: `Bearer ${siteAccessToken}`,
             'accept': 'application/json;odata=nometadata',
             'content-length': bodyLength
           }
@@ -154,12 +141,12 @@ class SpoFileAddCommand extends SpoCommand {
       })
       .then((): Promise<void> => {
         if (args.options.contentType || args.options.publish || args.options.approve) {
-          return this.getFileParentList(fileName, args.options.webUrl, folderPath, siteAccessToken, cmd)
+          return this.getFileParentList(fileName, args.options.webUrl, folderPath, cmd)
             .then((listSettingsResp: ListSettings) => {
               listSettings = listSettingsResp;
 
               if (args.options.contentType) {
-                return this.listHasContentType(args.options.contentType, args.options.webUrl, listSettings, siteAccessToken, cmd);
+                return this.listHasContentType(args.options.contentType, args.options.webUrl, listSettings, cmd);
               }
 
               return Promise.resolve();
@@ -182,11 +169,11 @@ class SpoFileAddCommand extends SpoCommand {
 
         if (fieldsToUpdate.length > 0) {
           // perform list item update and checkin
-          return this.validateUpdateListItem(args.options.webUrl, folderPath, fileName, fieldsToUpdate, siteAccessToken, cmd, args.options.checkInComment);
+          return this.validateUpdateListItem(args.options.webUrl, folderPath, fileName, fieldsToUpdate, cmd, args.options.checkInComment);
         }
         else if (isCheckedOut) {
           // perform checkin
-          return this.fileCheckIn(args, fileName, siteAccessToken, cmd);
+          return this.fileCheckIn(args, fileName);
         }
 
         return Promise.resolve();
@@ -204,7 +191,6 @@ class SpoFileAddCommand extends SpoCommand {
           const requestOptions: any = {
             url: `${args.options.webUrl}/_api/web/GetFolderByServerRelativeUrl('${encodeURIComponent(folderPath)}')/Files('${encodeURIComponent(fileName)}')/approve(comment='${encodeURIComponent(args.options.approveComment || '')}')`,
             headers: {
-              authorization: `Bearer ${siteAccessToken}`,
               'accept': 'application/json;odata=nometadata'
             },
             json: true
@@ -225,7 +211,6 @@ class SpoFileAddCommand extends SpoCommand {
           const requestOptions: any = {
             url: `${args.options.webUrl}/_api/web/GetFolderByServerRelativeUrl('${encodeURIComponent(folderPath)}')/Files('${encodeURIComponent(fileName)}')/publish(comment='${encodeURIComponent(args.options.publishComment || '')}')`,
             headers: {
-              authorization: `Bearer ${siteAccessToken}`,
               'accept': 'application/json;odata=nometadata'
             },
             json: true
@@ -249,9 +234,6 @@ class SpoFileAddCommand extends SpoCommand {
 
           const requestOptions: any = {
             url: `${args.options.webUrl}/_api/web/GetFolderByServerRelativeUrl('${encodeURIComponent(folderPath)}')/Files('${encodeURIComponent(fileName)}')/UndoCheckOut()`,
-            headers: {
-              authorization: `Bearer ${siteAccessToken}`
-            }
           };
 
           request.post(requestOptions)
@@ -359,14 +341,8 @@ class SpoFileAddCommand extends SpoCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, connect to a SharePoint Online site,
-    using the ${chalk.blue(commands.CONNECT)} command.
+      `  Remarks:
   
-  Remarks:
-  
-    To add a file, you have to first connect to SharePoint using the
-    ${chalk.blue(commands.CONNECT)} command, eg. ${chalk.grey(`${config.delimiter} ${commands.CONNECT} https://contoso.sharepoint.com`)}.
-
     This command allows using unknown properties. Each property corresponds to
     the list item field that should be set when uploading the file.
         
@@ -453,7 +429,7 @@ class SpoFileAddCommand extends SpoCommand {
       `);
   }
 
-  private listHasContentType(contentType: string, webUrl: string, listSettings: ListSettings, siteAccessToken: string, cmd: any): Promise<void> {
+  private listHasContentType(contentType: string, webUrl: string, listSettings: ListSettings, cmd: any): Promise<void> {
     if (this.verbose) {
       cmd.log(`Getting list of available content types ...`);
     }
@@ -461,7 +437,6 @@ class SpoFileAddCommand extends SpoCommand {
     const requestOptions: any = {
       url: `${webUrl}/_api/web/lists('${listSettings.Id}')/contenttypes?$select=Name,Id`,
       headers: {
-        authorization: `Bearer ${siteAccessToken}`,
         'accept': 'application/json;odata=nometadata'
       },
       json: true
@@ -479,12 +454,11 @@ class SpoFileAddCommand extends SpoCommand {
     });
   }
 
-  private fileCheckOut(fileName: string, webUrl: string, folder: string, siteAccessToken: string, cmd: any): Promise<void> {
+  private fileCheckOut(fileName: string, webUrl: string, folder: string): Promise<void> {
     // check if file already exists, otherwise it can't be checked out
     const requestOptions: any = {
       url: `${webUrl}/_api/web/GetFolderByServerRelativeUrl('${encodeURIComponent(folder)}')/Files('${encodeURIComponent(fileName)}')`,
       headers: {
-        authorization: `Bearer ${siteAccessToken}`,
         'accept': 'application/json;odata=nometadata'
       }
     };
@@ -495,7 +469,6 @@ class SpoFileAddCommand extends SpoCommand {
         const requestOptions: any = {
           url: `${webUrl}/_api/web/GetFolderByServerRelativeUrl('${encodeURIComponent(folder)}')/Files('${encodeURIComponent(fileName)}')/CheckOut()`,
           headers: {
-            authorization: `Bearer ${siteAccessToken}`,
             'accept': 'application/json;odata=nometadata',
           },
           json: true
@@ -505,7 +478,7 @@ class SpoFileAddCommand extends SpoCommand {
       });
   }
 
-  private getFileParentList(fileName: string, webUrl: string, folder: string, siteAccessToken: string, cmd: any): Promise<ListSettings> {
+  private getFileParentList(fileName: string, webUrl: string, folder: string, cmd: any): Promise<ListSettings> {
     if (this.verbose) {
       cmd.log(`Getting list details in order to get its available content types afterwards...`);
     }
@@ -513,7 +486,6 @@ class SpoFileAddCommand extends SpoCommand {
     const requestOptions: any = {
       url: `${webUrl}/_api/web/GetFolderByServerRelativeUrl('${encodeURIComponent(folder)}')/Files('${encodeURIComponent(fileName)}')/ListItemAllFields/ParentList?$Select=Id,EnableModeration,EnableVersioning,EnableMinorVersions`,
       headers: {
-        authorization: `Bearer ${siteAccessToken}`,
         'accept': 'application/json;odata=nometadata'
       },
       json: true
@@ -522,7 +494,7 @@ class SpoFileAddCommand extends SpoCommand {
     return request.get(requestOptions);
   }
 
-  private validateUpdateListItem(webUrl: string, folderPath: string, fileName: string, fieldsToUpdate: FieldValue[], siteAccessToken: string, cmd: any, checkInComment?: string): Promise<void> {
+  private validateUpdateListItem(webUrl: string, folderPath: string, fileName: string, fieldsToUpdate: FieldValue[], cmd: any, checkInComment?: string): Promise<void> {
     if (this.verbose) {
       cmd.log(`Validate and update list item values for file ${fileName}`);
     }
@@ -542,7 +514,6 @@ class SpoFileAddCommand extends SpoCommand {
     const requestOptions: any = {
       url: `${webUrl}/_api/web/GetFolderByServerRelativeUrl('${encodeURIComponent(folderPath)}')/Files('${encodeURIComponent(fileName)}')/ListItemAllFields/ValidateUpdateListItem()`,
       headers: {
-        authorization: `Bearer ${siteAccessToken}`,
         'accept': 'application/json;odata=nometadata'
       },
       body: requestBody,
@@ -565,11 +536,10 @@ class SpoFileAddCommand extends SpoCommand {
       });
   }
 
-  private fileCheckIn(args: any, fileName: string, siteAccessToken: string, cmd: any): Promise<void> {
+  private fileCheckIn(args: any, fileName: string): Promise<void> {
     const requestOptions: any = {
       url: `${args.options.webUrl}/_api/web/GetFolderByServerRelativeUrl('${encodeURIComponent(args.options.folder)}')/Files('${encodeURIComponent(fileName)}')/CheckIn(comment='${encodeURIComponent(args.options.checkInComment || '')}',checkintype=0)`,
       headers: {
-        authorization: `Bearer ${siteAccessToken}`,
         'accept': 'application/json;odata=nometadata'
       },
       json: true

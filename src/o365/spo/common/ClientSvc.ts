@@ -26,7 +26,6 @@ export class ClientSvc {
    * _ObjectType_=SP.Web
    * ServerRelativeUrl=/sites/contoso
    * @param webUrl web url
-   * @param siteAccessToken site access token
    * @param formDigestValue formDigestValue
    */
   public getCurrentWebIdentity(webUrl: string, formDigestValue: string): Promise<IdentityResponse> {
@@ -110,7 +109,6 @@ export class ClientSvc {
     * @param webObjectIdentity ObjectIdentity. Has format _ObjectIdentity_=<GUID>|<GUID>:site:<GUID>:web:<GUID>
     * @param webUrl web url
     * @param siteRelativeUrl site relative url e.g. /Shared Documents/Folder1
-    * @param siteAccessToken site access token
     * @param formDigestValue formDigestValue
     */
 
