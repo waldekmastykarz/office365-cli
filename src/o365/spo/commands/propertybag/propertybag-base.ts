@@ -152,7 +152,7 @@ export abstract class SpoPropertyBagBaseCommand extends SpoCommand {
     return { key: objKey, value: objValue } as Property;
   }
 
-  public static setProperty(name: string, value: string, webUrl: string, formDigest: string, accessToken: string, identityResp: IdentityResponse, cmd: CommandInstance, debug: boolean, folder?: string): Promise<any> {
+  public static setProperty(name: string, value: string, webUrl: string, formDigest: string, identityResp: IdentityResponse, cmd: CommandInstance, debug: boolean, folder?: string): Promise<any> {
     let objectType: string = 'AllProperties';
     if (folder) {
       objectType = 'Properties';
@@ -161,7 +161,6 @@ export abstract class SpoPropertyBagBaseCommand extends SpoCommand {
     const requestOptions: any = {
       url: `${webUrl}/_vti_bin/client.svc/ProcessQuery`,
       headers: {
-        authorization: `Bearer ${accessToken}`,
         'X-RequestDigest': formDigest
       },
       body: `<Request AddExpandoFieldTypeSuffix="true" SchemaVersion="15.0.0.0" LibraryVersion="16.0.0.0" ApplicationName="${config.applicationName}" xmlns="http://schemas.microsoft.com/sharepoint/clientquery/2009"><Actions><Method Name="SetFieldValue" Id="206" ObjectPathId="205"><Parameters><Parameter Type="String">${Utils.escapeXml(name)}</Parameter><Parameter Type="String">${Utils.escapeXml(value)}</Parameter></Parameters></Method><Method Name="Update" Id="207" ObjectPathId="198" /></Actions><ObjectPaths><Property Id="205" ParentId="198" Name="${objectType}" /><Identity Id="198" Name="${identityResp.objectIdentity}" /></ObjectPaths></Request>`
@@ -189,9 +188,9 @@ export abstract class SpoPropertyBagBaseCommand extends SpoCommand {
    * @param options command options
    * @param cmd command instance
    */
-  public static isNoScriptSite(webUrl: string, formDigest: string, accessToken: string, webIdentityResp: IdentityResponse, clientSvcCommons: ClientSvc): Promise<boolean> {
+  public static isNoScriptSite(webUrl: string, formDigest: string, webIdentityResp: IdentityResponse, clientSvcCommons: ClientSvc): Promise<boolean> {
     return new Promise<boolean>((resolve: (isNoScriptSite: boolean) => void, reject: (error: any) => void): void => {
-      clientSvcCommons.getEffectiveBasePermissions(webIdentityResp.objectIdentity, webUrl, accessToken, formDigest)
+      clientSvcCommons.getEffectiveBasePermissions(webIdentityResp.objectIdentity, webUrl, formDigest)
         .then((basePermissionsResp: BasePermissions): void => {
           resolve(basePermissionsResp.has(PermissionKind.AddAndCustomizePages) === false);
         })

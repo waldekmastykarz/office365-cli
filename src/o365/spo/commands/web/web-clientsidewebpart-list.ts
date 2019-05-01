@@ -1,4 +1,3 @@
-import auth from '../../SpoAuth';
 import config from '../../../../config';
 import commands from '../../commands';
 import request from '../../../../request';
@@ -9,7 +8,6 @@ import {
 } from '../../../../Command';
 import SpoCommand from '../../SpoCommand';
 import { GetClientSideWebPartsRsp } from './GetClientSideWebPartsRsp';
-import { Auth } from '../../../../Auth';
 const vorpal: Vorpal = require('../../../../vorpal-init');
 
 interface CommandArgs {
@@ -31,26 +29,15 @@ class SpoWebClientSideWebPartListCommand extends SpoCommand {
   }
 
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
-    const resource: string = Auth.getResourceFromUrl(args.options.webUrl);
+    const requestOptions: any = {
+      url: `${args.options.webUrl}/_api/web/GetClientSideWebParts`,
+      headers: {
+        accept: 'application/json;odata=nometadata'
+      },
+      json: true
+    };
 
-    if (this.debug) {
-      cmd.log(`Retrieving access token for ${resource}...`);
-    }
-
-    auth
-      .getAccessToken(resource, auth.service.refreshToken as string, cmd, this.debug)
-      .then((accessToken: string): Promise<GetClientSideWebPartsRsp> => {
-        const requestOptions: any = {
-          url: `${args.options.webUrl}/_api/web/GetClientSideWebParts`,
-          headers: {
-            authorization: `Bearer ${accessToken}`,
-            accept: 'application/json;odata=nometadata'
-          },
-          json: true
-        };
-
-        return request.get(requestOptions);
-      })
+    request.get<GetClientSideWebPartsRsp>(requestOptions)
       .then((res: GetClientSideWebPartsRsp): void => {
         const clientSideWebParts: any[] = [];
         res.value.forEach(component => {
@@ -106,16 +93,7 @@ class SpoWebClientSideWebPartListCommand extends SpoCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to a SharePoint Online site,
-    using the ${chalk.blue(commands.LOGIN)} command.
-
-  Remarks:
-  
-    To get the list of available client-side web parts, you have to first
-    log in to SharePoint using the ${chalk.blue(commands.LOGIN)} command,
-    eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN} https://contoso.sharepoint.com`)}.
-  
-  Examples:
+      `  Examples:
 
     Lists all the available client-side web parts for the specified site
       ${chalk.grey(config.delimiter)} ${this.name} --webUrl https://contoso.sharepoint.com

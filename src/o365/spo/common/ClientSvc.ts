@@ -29,11 +29,10 @@ export class ClientSvc {
    * @param siteAccessToken site access token
    * @param formDigestValue formDigestValue
    */
-  public getCurrentWebIdentity(webUrl: string, siteAccessToken: string, formDigestValue: string): Promise<IdentityResponse> {
+  public getCurrentWebIdentity(webUrl: string, formDigestValue: string): Promise<IdentityResponse> {
     const requestOptions: any = {
       url: `${webUrl}/_vti_bin/client.svc/ProcessQuery`,
       headers: {
-        authorization: `Bearer ${siteAccessToken}`,
         'X-RequestDigest': formDigestValue
       },
       body: `<Request AddExpandoFieldTypeSuffix="true" SchemaVersion="15.0.0.0" LibraryVersion="16.0.0.0" ApplicationName="${config.applicationName}" xmlns="http://schemas.microsoft.com/sharepoint/clientquery/2009"><Actions><Query Id="1" ObjectPathId="5"><Query SelectAllProperties="false"><Properties><Property Name="ServerRelativeUrl" ScalarProperty="true" /></Properties></Query></Query></Actions><ObjectPaths><Property Id="5" ParentId="3" Name="Web" /><StaticProperty Id="3" TypeId="{3747adcd-a3c3-41b9-bfab-4a64dd2f1e0a}" Name="Current" /></ObjectPaths></Request>`
@@ -68,13 +67,12 @@ export class ClientSvc {
    * @param siteAccessToken site access token
    * @param formDigestValue formDigestValue
    */
-  public getEffectiveBasePermissions(webObjectIdentity: string, webUrl: string, siteAccessToken: string, formDigestValue: string): Promise<BasePermissions> {
+  public getEffectiveBasePermissions(webObjectIdentity: string, webUrl: string, formDigestValue: string): Promise<BasePermissions> {
     const basePermissionsResult: BasePermissions = new BasePermissions();
 
     const requestOptions: any = {
       url: `${webUrl}/_vti_bin/client.svc/ProcessQuery`,
       headers: {
-        authorization: `Bearer ${siteAccessToken}`,
         'X-RequestDigest': formDigestValue
       },
       body: `<Request AddExpandoFieldTypeSuffix="true" SchemaVersion="15.0.0.0" LibraryVersion="16.0.0.0" ApplicationName="${config.applicationName}" xmlns="http://schemas.microsoft.com/sharepoint/clientquery/2009"><Actions><Query Id="11" ObjectPathId="5"><Query SelectAllProperties="false"><Properties><Property Name="EffectiveBasePermissions" ScalarProperty="true" /></Properties></Query></Query></Actions><ObjectPaths><Identity Id="5" Name="${webObjectIdentity}" /></ObjectPaths></Request>`
@@ -116,13 +114,12 @@ export class ClientSvc {
     * @param formDigestValue formDigestValue
     */
 
-  public getFolderIdentity(webObjectIdentity: string, webUrl: string, siteRelativeUrl: string, siteAccessToken: string, formDigestValue: string): Promise<IdentityResponse> {
+  public getFolderIdentity(webObjectIdentity: string, webUrl: string, siteRelativeUrl: string, formDigestValue: string): Promise<IdentityResponse> {
     const serverRelativePath: string = Utils.getServerRelativePath(webUrl, siteRelativeUrl);
 
     const requestOptions: any = {
       url: `${webUrl}/_vti_bin/client.svc/ProcessQuery`,
       headers: {
-        authorization: `Bearer ${siteAccessToken}`,
         'X-RequestDigest': formDigestValue
       },
       body: `<Request AddExpandoFieldTypeSuffix="true" SchemaVersion="15.0.0.0" LibraryVersion="16.0.0.0" ApplicationName="${config.applicationName}" xmlns="http://schemas.microsoft.com/sharepoint/clientquery/2009"><Actions><ObjectPath Id="10" ObjectPathId="9" /><ObjectIdentityQuery Id="11" ObjectPathId="9" /><Query Id="12" ObjectPathId="9"><Query SelectAllProperties="false"><Properties><Property Name="Properties" SelectAll="true"><Query SelectAllProperties="false"><Properties /></Query></Property></Properties></Query></Query></Actions><ObjectPaths><Method Id="9" ParentId="5" Name="GetFolderByServerRelativeUrl"><Parameters><Parameter Type="String">${serverRelativePath}</Parameter></Parameters></Method><Identity Id="5" Name="${webObjectIdentity}" /></ObjectPaths></Request>`

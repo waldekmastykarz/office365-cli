@@ -1,4 +1,3 @@
-import auth from '../../SpoAuth';
 import request from '../../../../request';
 import config from '../../../../config';
 import commands from '../../commands';
@@ -8,7 +7,6 @@ import {
   CommandValidate
 } from '../../../../Command';
 import SpoCommand from '../../SpoCommand';
-import { Auth } from '../../../../Auth';
 const vorpal: Vorpal = require('../../../../vorpal-init');
 
 interface CommandArgs {
@@ -37,35 +35,20 @@ class SpoWebAddCommand extends SpoCommand {
 
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
     const removeWeb = (): void => {
-      const resource: string = Auth.getResourceFromUrl(args.options.webUrl);
+      const requestOptions: any = {
+        url: `${encodeURI(args.options.webUrl)}/_api/web`,
+        headers: {
+          accept: 'application/json;odata=nometadata',
+          'X-HTTP-Method': 'DELETE'
+        },
+        json: true
+      };
 
-      if (this.debug) {
-        cmd.log(`Retrieving access token for ${resource}...`);
+      if (this.verbose) {
+        cmd.log(`Deleting subsite ${args.options.webUrl} ...`);
       }
 
-      auth
-        .getAccessToken(resource, auth.service.refreshToken as string, cmd, this.debug)
-        .then((accessToken: string): Promise<void> => {
-          if (this.debug) {
-            cmd.log(`Retrieved access token ${accessToken}. Deleting subsite ${args.options.webUrl}...`);
-          }
-
-          const requestOptions: any = {
-            url: `${encodeURI(args.options.webUrl)}/_api/web`,
-            headers: {
-              authorization: `Bearer ${accessToken}`,
-              accept: 'application/json;odata=nometadata',
-              'X-HTTP-Method': 'DELETE'
-            },
-            json: true
-          };
-
-          if (this.verbose) {
-            cmd.log(`Deleting subsite ${args.options.webUrl} ...`);
-          }
-
-          return request.post(requestOptions)
-        })
+      request.post(requestOptions)
         .then((): void => {
           if (this.verbose) {
             cmd.log(vorpal.chalk.green('DONE'));
@@ -130,15 +113,7 @@ class SpoWebAddCommand extends SpoCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to a SharePoint Online site,
-      using the ${chalk.blue(commands.LOGIN)} command.
-
-  Remarks:
-  
-    To delete a subsite, you have to first log in to SharePoint using the
-    ${chalk.blue(commands.LOGIN)} command, eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN} https://contoso.sharepoint.com`)}.
-  
-  Examples:
+      `  Examples:
   
     Delete subsite without prompting for confirmation
       ${chalk.grey(config.delimiter)} ${commands.WEB_REMOVE} --webUrl https://contoso.sharepoint.com/subsite --confirm

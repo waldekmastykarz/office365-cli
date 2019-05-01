@@ -1,4 +1,3 @@
-import auth from '../../SpoAuth';
 import config from '../../../../config';
 import commands from '../../commands';
 import request from '../../../../request';
@@ -8,7 +7,6 @@ import {
   CommandValidate
 } from '../../../../Command';
 import SpoCommand from '../../SpoCommand';
-import { Auth } from '../../../../Auth';
 const vorpal: Vorpal = require('../../../../vorpal-init');
 
 interface CommandArgs {
@@ -50,58 +48,47 @@ class SpoWebSetCommand extends SpoCommand {
   }
 
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: (err?: any) => void): void {
-    const resource: string = Auth.getResourceFromUrl(args.options.webUrl);
+    const payload: any = {};
+    if (args.options.title) {
+      payload.Title = args.options.title;
+    }
+    if (args.options.description) {
+      payload.Description = args.options.description;
+    }
+    if (args.options.siteLogoUrl) {
+      payload.SiteLogoUrl = args.options.siteLogoUrl;
+    }
+    if (typeof args.options.quickLaunchEnabled !== 'undefined') {
+      payload.QuickLaunchEnabled = args.options.quickLaunchEnabled === 'true';
+    }
+    if (typeof args.options.headerEmphasis !== 'undefined') {
+      payload.HeaderEmphasis = args.options.headerEmphasis;
+    }
+    if (typeof args.options.headerLayout !== 'undefined') {
+      payload.HeaderLayout = args.options.headerLayout === 'standard' ? 1 : 2;
+    }
+    if (typeof args.options.megaMenuEnabled !== 'undefined') {
+      payload.MegaMenuEnabled = args.options.megaMenuEnabled === 'true';
+    }
+    if (typeof args.options.footerEnabled !== 'undefined') {
+      payload.FooterEnabled = args.options.footerEnabled === 'true';
+    }
 
-    auth
-      .getAccessToken(resource, auth.service.refreshToken as string, cmd, this.debug)
-      .then((accessToken: string): Promise<void> => {
-        if (this.debug) {
-          cmd.log(`Retrieved access token ${accessToken}. Updating subsite properties...`);
-        }
+    const requestOptions: any = {
+      url: `${args.options.webUrl}/_api/web`,
+      headers: {
+        'content-type': 'application/json;odata=nometadata',
+        accept: 'application/json;odata=nometadata'
+      },
+      json: true,
+      body: payload
+    };
 
-        const payload: any = {};
-        if (args.options.title) {
-          payload.Title = args.options.title;
-        }
-        if (args.options.description) {
-          payload.Description = args.options.description;
-        }
-        if (args.options.siteLogoUrl) {
-          payload.SiteLogoUrl = args.options.siteLogoUrl;
-        }
-        if (typeof args.options.quickLaunchEnabled !== 'undefined') {
-          payload.QuickLaunchEnabled = args.options.quickLaunchEnabled === 'true';
-        }
-        if (typeof args.options.headerEmphasis !== 'undefined') {
-          payload.HeaderEmphasis = args.options.headerEmphasis;
-        }
-        if (typeof args.options.headerLayout !== 'undefined') {
-          payload.HeaderLayout = args.options.headerLayout === 'standard' ? 1 : 2;
-        }
-        if (typeof args.options.megaMenuEnabled !== 'undefined') {
-          payload.MegaMenuEnabled = args.options.megaMenuEnabled === 'true';
-        }
-        if (typeof args.options.footerEnabled !== 'undefined') {
-          payload.FooterEnabled = args.options.footerEnabled === 'true';
-        }
+    if (this.verbose) {
+      cmd.log(`Updating properties of subsite ${args.options.webUrl}...`);
+    }
 
-        const requestOptions: any = {
-          url: `${args.options.webUrl}/_api/web`,
-          headers: {
-            authorization: `Bearer ${accessToken}`,
-            'content-type': 'application/json;odata=nometadata',
-            accept: 'application/json;odata=nometadata'
-          },
-          json: true,
-          body: payload
-        };
-
-        if (this.verbose) {
-          cmd.log(`Updating properties of subsite ${args.options.webUrl}...`);
-        }
-
-        return request.patch(requestOptions)
-      })
+    request.patch(requestOptions)
       .then((): void => {
         if (this.debug) {
           cmd.log(vorpal.chalk.green('DONE'));
@@ -215,16 +202,7 @@ class SpoWebSetCommand extends SpoCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to a SharePoint Online site,
-    using the ${chalk.blue(commands.LOGIN)} command.
-
-  Remarks:
-  
-    To update subsite properties, you have to first log in to SharePoint
-    using the ${chalk.blue(commands.LOGIN)} command,
-    eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN} https://contoso.sharepoint.com`)}.
-  
-  Examples:
+      `  Examples:
   
     Update subsite title
       ${chalk.grey(config.delimiter)} ${commands.WEB_SET} --webUrl https://contoso.sharepoint.com/sites/team-a --title Team-a
