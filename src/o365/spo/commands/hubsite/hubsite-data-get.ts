@@ -1,4 +1,3 @@
-import auth from '../../SpoAuth';
 import config from '../../../../config';
 import request from '../../../../request';
 import commands from '../../commands';
@@ -7,7 +6,6 @@ import {
 } from '../../../../Command';
 import SpoCommand from '../../SpoCommand';
 import GlobalOptions from '../../../../GlobalOptions';
-import { Auth } from '../../../../Auth';
 
 const vorpal: Vorpal = require('../../../../vorpal-init');
 
@@ -36,35 +34,22 @@ class SpoHubSiteDataGetCommand extends SpoCommand {
   }
 
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
-    const resource: string = Auth.getResourceFromUrl(args.options.webUrl);
-    let siteAccessToken: string = '';
+    if (this.verbose) {
+      cmd.log('Retrieving hub site data...');
+    }
 
-    auth
-      .getAccessToken(resource, auth.service.refreshToken as string, cmd, this.debug)
-      .then((accessToken: string): Promise<any> => {
-        siteAccessToken = accessToken;
+    const forceRefresh: boolean = args.options.forceRefresh === true;
 
-        if (this.debug) {
-          cmd.log(`Retrieved access token ${accessToken}`);
-        }
+    const requestOptions: any = {
+      url: `${args.options.webUrl}/_api/web/HubSiteData(${forceRefresh})`,
+      headers: {
+        accept: 'application/json;odata=nometadata'
+      },
+      json: true
+    };
 
-        if (this.verbose) {
-          cmd.log('Retrieving hub site data...');
-        }
-
-        const forceRefresh: boolean = args.options.forceRefresh === true;
-
-        const requestOptions: any = {
-          url: `${args.options.webUrl}/_api/web/HubSiteData(${forceRefresh})`,
-          headers: {
-            authorization: `Bearer ${siteAccessToken}`,
-            accept: 'application/json;odata=nometadata'
-          },
-          json: true
-        };
-
-        return request.get(requestOptions);
-      })
+    request
+      .get(requestOptions)
       .then((res: any): void => {
         if (res['odata.null'] !== true) {
           cmd.log(JSON.parse(res.value));
@@ -118,18 +103,11 @@ class SpoHubSiteDataGetCommand extends SpoCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to a SharePoint Online site using
-    the ${chalk.blue(commands.LOGIN)} command.
-        
-  Remarks:
+      `  Remarks:
 
     ${chalk.yellow('Attention:')} This command is based on a SharePoint API that is currently
     in preview and is subject to change once the API reached general
     availability.
-
-    To get hub site data for a site, you have to first log in to
-    a SharePoint site using the ${chalk.blue(commands.LOGIN)} command,
-    eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN} https://contoso.sharepoint.com`)}.
 
     By default, the hub site data is returned from the server's cache.
     To refresh the data with the latest updates, use the ${chalk.blue('-f, --forceRefresh')}
