@@ -1,8 +1,7 @@
 import commands from '../../commands';
 import Command, { CommandOption, CommandError } from '../../../../Command';
 import * as sinon from 'sinon';
-import appInsights from '../../../../appInsights';
-import auth, { Site } from '../../SpoAuth';
+import auth from '../../../../Auth';
 const command: Command = require('./hubsite-list');
 import * as assert from 'assert';
 import request from '../../../../request';
@@ -13,28 +12,23 @@ describe(commands.HUBSITE_LIST, () => {
   let log: string[];
   let cmdInstance: any;
   let cmdInstanceLogSpy: sinon.SinonSpy;
-  let trackEvent: any;
-  let telemetry: any;
 
   before(() => {
     sinon.stub(auth, 'restoreAuth').callsFake(() => Promise.resolve());
-    sinon.stub(auth, 'ensureAccessToken').callsFake(() => { return Promise.resolve('ABC'); });
-    trackEvent = sinon.stub(appInsights, 'trackEvent').callsFake((t) => {
-      telemetry = t;
-    });
+    auth.service.connected = true;
+    auth.service.spoUrl = 'https://contoso.sharepoint.com';
   });
 
   beforeEach(() => {
     vorpal = require('../../../../vorpal-init');
     log = [];
     cmdInstance = {
+      action: command.action(),
       log: (msg: string) => {
         log.push(msg);
       }
     };
     cmdInstanceLogSpy = sinon.spy(cmdInstance, 'log');
-    auth.site = new Site();
-    telemetry = null;
   });
 
   afterEach(() => {
@@ -47,10 +41,10 @@ describe(commands.HUBSITE_LIST, () => {
 
   after(() => {
     Utils.restore([
-      appInsights.trackEvent,
-      auth.ensureAccessToken,
       auth.restoreAuth
     ]);
+    auth.service.connected = false;
+    auth.service.spoUrl = undefined;
   });
 
   it('has correct name', () => {
@@ -59,47 +53,6 @@ describe(commands.HUBSITE_LIST, () => {
 
   it('has a description', () => {
     assert.notEqual(command.description, null);
-  });
-
-  it('calls telemetry', (done) => {
-    cmdInstance.action = command.action();
-    cmdInstance.action({ options: {} }, () => {
-      try {
-        assert(trackEvent.called);
-        done();
-      }
-      catch (e) {
-        done(e);
-      }
-    });
-  });
-
-  it('logs correct telemetry event', (done) => {
-    cmdInstance.action = command.action();
-    cmdInstance.action({ options: {} }, () => {
-      try {
-        assert.equal(telemetry.name, commands.HUBSITE_LIST);
-        done();
-      }
-      catch (e) {
-        done(e);
-      }
-    });
-  });
-
-  it('aborts when not logged in to a SharePoint site', (done) => {
-    auth.site = new Site();
-    auth.site.connected = false;
-    cmdInstance.action = command.action();
-    cmdInstance.action({ options: { debug: true } }, (err?: any) => {
-      try {
-        assert.equal(JSON.stringify(err), JSON.stringify(new CommandError('Log in to a SharePoint Online site first')));
-        done();
-      }
-      catch (e) {
-        done(e);
-      }
-    });
   });
 
   it('lists hub sites', (done) => {
@@ -134,10 +87,6 @@ describe(commands.HUBSITE_LIST, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: false } }, () => {
       try {
         assert(cmdInstanceLogSpy.calledWith([
@@ -192,10 +141,6 @@ describe(commands.HUBSITE_LIST, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: true } }, () => {
       try {
         assert(cmdInstanceLogSpy.calledWith([
@@ -250,10 +195,6 @@ describe(commands.HUBSITE_LIST, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: false, output: 'json' } }, () => {
       try {
         assert(cmdInstanceLogSpy.calledWith([
@@ -425,10 +366,6 @@ describe(commands.HUBSITE_LIST, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: false, includeAssociatedSites: true } }, () => {
       try {
         assert(cmdInstanceLogSpy.calledWith([
@@ -590,10 +527,6 @@ describe(commands.HUBSITE_LIST, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: false, includeAssociatedSites: true, output: 'json' } }, () => {
       try {
         assert(cmdInstanceLogSpy.calledWith([
@@ -650,7 +583,7 @@ describe(commands.HUBSITE_LIST, () => {
     });
   });
 
-  it('corrrectly retrieves the associated sites in batches', (done) => {
+  it('correctly retrieves the associated sites in batches', (done) => {
     // Cast the command class instance to any so we can set the private
     // property 'batchSize' to a small number for easier testing
     const newBatchSize = 3;
@@ -732,10 +665,6 @@ describe(commands.HUBSITE_LIST, () => {
       }
       return Promise.reject('Invalid request');
     });
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: false, includeAssociatedSites: true, output: 'json' } }, () => {
       try {
         assert.equal((firstPagedRequest && secondPagedRequest && thirdPagedRequest), true);
@@ -829,10 +758,6 @@ describe(commands.HUBSITE_LIST, () => {
       }
       return Promise.reject('Invalid request');
     });
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: true, includeAssociatedSites: true, output: 'json' } }, () => {
       try {
         assert.equal((firstPagedRequest && secondPagedRequest && thirdPagedRequest), true);
@@ -844,7 +769,7 @@ describe(commands.HUBSITE_LIST, () => {
     });
   });
 
-  it('corrrectly handles empty result while retrieving associated sites in batches', (done) => {
+  it('correctly handles empty result while retrieving associated sites in batches', (done) => {
     // Cast the command class instance to any so we can set the private
     // property 'batchSize' to a small number for easier testing
     const newBatchSize = 3;
@@ -894,10 +819,6 @@ describe(commands.HUBSITE_LIST, () => {
       }
       return Promise.reject('Invalid request');
     });
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: true, includeAssociatedSites: true, output: 'json' } }, () => {
       try {
         assert.equal(firstPagedRequest, true);
@@ -914,10 +835,6 @@ describe(commands.HUBSITE_LIST, () => {
       return Promise.reject({ error: { 'odata.error': { message: { value: 'An error has occurred' } } } });
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
     cmdInstance.action({ options: { debug: false } }, (err?: any) => {
       try {
         assert.equal(JSON.stringify(err), JSON.stringify(new CommandError('An error has occurred')));
@@ -972,23 +889,5 @@ describe(commands.HUBSITE_LIST, () => {
     });
     Utils.restore(vorpal.find);
     assert(containsExamples);
-  });
-
-  it('correctly handles lack of valid access token', (done) => {
-    Utils.restore(auth.ensureAccessToken);
-    sinon.stub(auth, 'ensureAccessToken').callsFake(() => { return Promise.reject(new Error('Error getting access token')); });
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
-    cmdInstance.action({ options: { debug: true } }, (err?: any) => {
-      try {
-        assert.equal(JSON.stringify(err), JSON.stringify(new CommandError('Error getting access token')));
-        done();
-      }
-      catch (e) {
-        done(e);
-      }
-    });
   });
 });
