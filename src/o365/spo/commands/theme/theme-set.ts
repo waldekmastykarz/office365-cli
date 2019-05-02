@@ -1,12 +1,10 @@
-import auth from '../../SpoAuth';
 import config from '../../../../config';
 import commands from '../../commands';
 import GlobalOptions from '../../../../GlobalOptions';
 import request from '../../../../request';
 import {
   CommandOption,
-  CommandValidate,
-  CommandError
+  CommandValidate
 } from '../../../../Command';
 import SpoCommand from '../../SpoCommand';
 import { ContextInfo, ClientSvcResponse, ClientSvcResponseContents } from '../../spo';
@@ -46,14 +44,12 @@ class SpoThemeSetCommand extends SpoCommand {
   }
 
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
-    auth
-      .ensureAccessToken(auth.service.resource, cmd, this.debug)
-      .then((accessToken: string): Promise<ContextInfo> => {
-        if (this.debug) {
-          cmd.log(`Retrieved access token ${accessToken}. Setting theme for the ${auth.site.url} tenant...`);
-        }
+    let spoAdminUrl: string = '';
 
-        return this.getRequestDigest(cmd, this.debug);
+    this.getSpoAdminUrl(cmd, this.debug)
+      .then((_spoAdminUrl: string): Promise<ContextInfo> => {
+        spoAdminUrl = _spoAdminUrl;
+        return this.getRequestDigest(spoAdminUrl);
       })
       .then((res: ContextInfo): Promise<string> => {
         const fullPath: string = path.resolve(args.options.filePath);
@@ -73,9 +69,8 @@ class SpoThemeSetCommand extends SpoCommand {
         const isInverted: boolean = args.options.isInverted ? true : false;
 
         const requestOptions: any = {
-          url: `${auth.site.url}/_vti_bin/client.svc/ProcessQuery`,
+          url: `${spoAdminUrl}/_vti_bin/client.svc/ProcessQuery`,
           headers: {
-            authorization: `Bearer ${auth.service.accessToken}`,
             'X-RequestDigest': res.FormDigestValue
           },
           body: `<Request AddExpandoFieldTypeSuffix="true" SchemaVersion="15.0.0.0" LibraryVersion="16.0.0.0" ApplicationName="${config.applicationName}" xmlns="http://schemas.microsoft.com/sharepoint/clientquery/2009"><Actions><ObjectPath Id="10" ObjectPathId="9" /><Method Name="UpdateTenantTheme" Id="11" ObjectPathId="9"><Parameters><Parameter Type="String">${Utils.escapeXml(args.options.name)}</Parameter><Parameter Type="String">{"isInverted":${isInverted},"name":"${Utils.escapeXml(args.options.name)}","palette":${JSON.stringify(palette)}}</Parameter></Parameters></Method></Actions><ObjectPaths><Constructor Id="9" TypeId="{268004ae-ef6b-4e9b-8425-127220d84719}"/></ObjectPaths></Request>`
@@ -83,17 +78,21 @@ class SpoThemeSetCommand extends SpoCommand {
 
         return request.post(requestOptions);
       })
-      .then((res: string): void => {
+      .then((res: string): Promise<void> => {
         const json: ClientSvcResponse = JSON.parse(res);
-        const response: ClientSvcResponseContents = json[0];
+        const contents: ClientSvcResponseContents = json.find(x => { return x['ErrorInfo']; });
 
-        if (response.ErrorInfo) {
-          cmd.log(new CommandError(response.ErrorInfo.ErrorMessage));
+        if (contents && contents.ErrorInfo) {
+          return Promise.reject(contents.ErrorInfo.ErrorMessage || 'ClientSvc unknown error');
         }
-        else {
-          const result: boolean = json[json.length - 1];
-          cmd.log(result);
+        return Promise.resolve();
+
+      }).then((): void => {
+
+        if (this.verbose) {
+          cmd.log(vorpal.chalk.green('DONE'));
         }
+
         cb();
       }, (err: any): void => this.handleRejectedPromise(err, cmd, cb));
   }
@@ -144,15 +143,7 @@ class SpoThemeSetCommand extends SpoCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to a SharePoint Online tenant admin site,
-  using the ${chalk.blue(commands.LOGIN)} command.
-
-  Remarks:
-  
-    To add or update a theme, you have to first log in to a tenant admin site using the
-    ${chalk.blue(commands.LOGIN)} command, eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN} https://contoso-admin.sharepoint.com`)}.
-        
-  Examples:
+      `  Examples:
   
     Add or update a theme from a theme JSON file
       ${chalk.grey(config.delimiter)} ${commands.THEME_SET} --name Contoso-Blue --filePath /Users/rjesh/themes/contoso-blue.json
