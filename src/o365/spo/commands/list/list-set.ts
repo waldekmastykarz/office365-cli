@@ -1,4 +1,3 @@
-import auth from '../../SpoAuth';
 import config from '../../../../config';
 import commands from '../../commands';
 import GlobalOptions from '../../../../GlobalOptions';
@@ -10,7 +9,6 @@ import {
 } from '../../../../Command';
 import SpoCommand from '../../SpoCommand';
 import Utils from '../../../../Utils';
-import { Auth } from '../../../../Auth';
 import { DraftVisibilityType } from './DraftVisibilityType';
 import { ListExperience } from './ListExperience';
 
@@ -222,39 +220,26 @@ class SpoListSetCommand extends SpoCommand {
   }
 
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
-    const resource: string = Auth.getResourceFromUrl(args.options.webUrl);
-    let siteAccessToken: string = '';
-
-    if (this.debug) {
-      cmd.log(`Retrieving access token for ${resource}...`);
+    if (this.verbose) {
+      cmd.log(`Updating list in site at ${args.options.webUrl}...`);
     }
 
-    auth
-      .getAccessToken(resource, auth.service.refreshToken as string, cmd, this.debug)
-      .then((accessToken: string): Promise<void> => {
-        siteAccessToken = accessToken;
+    const requestBody: any = this.mapRequestBody(args.options);
 
-        if (this.verbose) {
-          cmd.log(`Updating list in site at ${args.options.webUrl}...`);
-        }
+    const requestOptions: any = {
+      url: `${args.options.webUrl}/_api/web/lists(guid'${encodeURIComponent(args.options.id)}')`,
+      method: 'POST',
+      headers: {
+        'X-HTTP-Method': 'MERGE',
+        'If-Match': '*',
+        'accept': 'application/json;odata=nometadata'
+      },
+      body: requestBody,
+      json: true
+    };
 
-        const requestBody: any = this.mapRequestBody(args.options);
-
-        const requestOptions: any = {
-          url: `${args.options.webUrl}/_api/web/lists(guid'${encodeURIComponent(args.options.id)}')`,
-          method: 'POST',
-          headers: {
-            authorization: `Bearer ${siteAccessToken}`,
-            'X-HTTP-Method': 'MERGE',
-            'If-Match': '*',
-            'accept': 'application/json;odata=nometadata'
-          },
-          body: requestBody,
-          json: true
-        };
-
-        return request.post(requestOptions);
-      })
+    request
+      .post(requestOptions)
       .then((): void => {
         // REST post call doesn't return anything
         cb();
@@ -673,15 +658,7 @@ class SpoListSetCommand extends SpoCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to a SharePoint Online site,
-    using the ${chalk.blue(commands.LOGIN)} command.
-  
-  Remarks:
-  
-    To update a list, you have to first log in to SharePoint using the
-    ${chalk.blue(commands.LOGIN)} command, eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN} https://contoso.sharepoint.com`)}.
-        
-  Examples:
+      `  Examples:
   
     Update the ${chalk.grey('allowContentTypes')} property of the list with id
     ${chalk.grey('3EA5A977-315E-4E25-8B0F-E4F949BF6B8F')} located in site

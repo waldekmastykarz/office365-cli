@@ -1,4 +1,3 @@
-import auth from '../../SpoAuth';
 import config from '../../../../config';
 import commands from '../../commands';
 import GlobalOptions from '../../../../GlobalOptions';
@@ -11,7 +10,6 @@ import {
 import SpoCommand from '../../SpoCommand';
 import Utils from '../../../../Utils';
 import { ListInstance } from "./ListInstance";
-import { Auth } from '../../../../Auth';
 import { ListTemplateType } from './ListTemplateType';
 import { DraftVisibilityType } from './DraftVisibilityType';
 import { ListExperience } from './ListExperience';
@@ -239,41 +237,24 @@ class SpoListAddCommand extends SpoCommand {
   }
 
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
-    const resource: string = Auth.getResourceFromUrl(args.options.webUrl);
-    let siteAccessToken: string = '';
-
-    if (this.debug) {
-      cmd.log(`Retrieving access token for ${resource}...`);
+    if (this.verbose) {
+      cmd.log(`Creating list in site at ${args.options.webUrl}...`);
     }
 
-    auth
-      .getAccessToken(resource, auth.service.refreshToken as string, cmd, this.debug)
-      .then((accessToken: string): Promise<ListInstance> => {
-        siteAccessToken = accessToken;
+    const requestBody: any = this.mapRequestBody(args.options);
 
-        if (this.debug) {
-          cmd.log(`Retrieved access token ${accessToken}. Retrieving request digest...`);
-        }
+    const requestOptions: any = {
+      url: `${args.options.webUrl}/_api/web/lists`,
+      method: 'POST',
+      headers: {
+        'accept': 'application/json;odata=nometadata'
+      },
+      body: requestBody,
+      json: true
+    };
 
-        if (this.verbose) {
-          cmd.log(`Creating list in site at ${args.options.webUrl}...`);
-        }
-
-        const requestBody: any = this.mapRequestBody(args.options);
-
-        const requestOptions: any = {
-          url: `${args.options.webUrl}/_api/web/lists`,
-          method: 'POST',
-          headers: {
-            authorization: `Bearer ${siteAccessToken}`,
-            'accept': 'application/json;odata=nometadata'
-          },
-          body: requestBody,
-          json: true
-        };
-
-        return request.post(requestOptions);
-      })
+    request
+      .post<ListInstance>(requestOptions)
       .then((listInstance: ListInstance): void => {
         cmd.log(listInstance);
 
@@ -701,16 +682,7 @@ class SpoListAddCommand extends SpoCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to a SharePoint Online site,
-    using the ${chalk.blue(commands.LOGIN)} command.
-  
-  Remarks:
-  
-    To add a list, you have to first log in to SharePoint using the
-    ${chalk.blue(commands.LOGIN)} command,
-    eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN} https://contoso.sharepoint.com`)}.
-        
-  Examples:
+      `  Examples:
   
     Add a list with title ${chalk.grey('Announcements')} and baseTemplate ${chalk.grey('Announcements')}
     in site ${chalk.grey('https://contoso.sharepoint.com/sites/project-x')}

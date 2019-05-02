@@ -1,4 +1,3 @@
-import auth from '../../SpoAuth';
 import config from '../../../../config';
 import commands from '../../commands';
 import GlobalOptions from '../../../../GlobalOptions';
@@ -9,7 +8,6 @@ import {
 } from '../../../../Command';
 import SpoCommand from '../../SpoCommand';
 import Utils from '../../../../Utils';
-import { Auth } from '../../../../Auth';
 
 const vorpal: Vorpal = require('../../../../vorpal-init');
 
@@ -50,31 +48,16 @@ class SpoListViewFieldAddCommand extends SpoCommand {
   }
 
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
-    const resource: string = Auth.getResourceFromUrl(args.options.webUrl);
-    let siteAccessToken: string = '';
-
     const listSelector: string = args.options.listId ? `(guid'${encodeURIComponent(args.options.listId)}')` : `/GetByTitle('${encodeURIComponent(args.options.listTitle as string)}')`;
     let viewSelector: string = '';
     let currentField: { InternalName: string; };
 
-    if (this.debug) {
-      cmd.log(`Retrieving access token for ${resource}...`);
+    if (this.verbose) {
+      cmd.log(`Getting field ${args.options.fieldId || args.options.fieldTitle}...`);
     }
 
-    auth
-      .getAccessToken(resource, auth.service.refreshToken as string, cmd, this.debug)
-      .then((accessToken: string): Promise<{ InternalName: string; }> => {
-        siteAccessToken = accessToken;
-        if (this.debug) {
-          cmd.log(`Retrieved access token ${accessToken}.`);
-        }
-
-        if (this.verbose) {
-          cmd.log(`Getting field ${args.options.fieldId || args.options.fieldTitle}...`);
-        }
-
-        return this.getField(args.options, listSelector, siteAccessToken, cmd, this.debug);
-      })
+    this
+      .getField(args.options, listSelector)
       .then((field: { InternalName: string; }): Promise<void> => {
         if (this.verbose) {
           cmd.log(`Adding the field ${args.options.fieldId || args.options.fieldTitle} to the view ${args.options.viewId || args.options.viewTitle}...`);
@@ -88,7 +71,6 @@ class SpoListViewFieldAddCommand extends SpoCommand {
         const postRequestOptions: any = {
           url: postRequestUrl,
           headers: {
-            authorization: `Bearer ${siteAccessToken}`,
             'accept': 'application/json;odata=nometadata'
           },
           json: true
@@ -118,7 +100,6 @@ class SpoListViewFieldAddCommand extends SpoCommand {
         const moveRequestOptions: any = {
           url: moveRequestUrl,
           headers: {
-            authorization: `Bearer ${siteAccessToken}`,
             'accept': 'application/json;odata=nometadata'
           },
           body: { 'field': currentField.InternalName, 'index': args.options.fieldPosition },
@@ -134,14 +115,13 @@ class SpoListViewFieldAddCommand extends SpoCommand {
 
   }
 
-  private getField(options: Options, listSelector: string, siteAccessToken: string, cmd: CommandInstance, debug: boolean): Promise<{ InternalName: string; }> {
+  private getField(options: Options, listSelector: string): Promise<{ InternalName: string; }> {
     const fieldSelector: string = options.fieldId ? `/getbyid('${encodeURIComponent(options.fieldId)}')` : `/getbyinternalnameortitle('${encodeURIComponent(options.fieldTitle as string)}')`;
     const getRequestUrl: string = `${options.webUrl}/_api/web/lists${listSelector}/fields${fieldSelector}`;
 
     const requestOptions: any = {
       url: getRequestUrl,
       headers: {
-        authorization: `Bearer ${siteAccessToken}`,
         'accept': 'application/json;odata=nometadata'
       },
       json: true
@@ -258,16 +238,7 @@ class SpoListViewFieldAddCommand extends SpoCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to SharePoint,
-    using the ${chalk.blue(commands.LOGIN)} command.
-  
-  Remarks:
-  
-    To add the specified field to list view, you have to first log in
-    to SharePoint using the ${chalk.blue(commands.LOGIN)} command,
-    eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN} https://contoso.sharepoint.com`)}.
-        
-  Examples:
+      `  Examples:
   
     Add field with ID ${chalk.grey('330f29c5-5c4c-465f-9f4b-7903020ae1ce')} to view
     with ID ${chalk.grey('3d760127-982c-405e-9c93-e1f76e1a1110')} of the list with ID

@@ -1,8 +1,7 @@
 import commands from '../../commands';
 import Command, { CommandValidate, CommandError, CommandOption } from '../../../../Command';
 import * as sinon from 'sinon';
-import appInsights from '../../../../appInsights';
-import auth, { Site } from '../../SpoAuth';
+import auth from '../../../../Auth';
 const command: Command = require('./list-sitescript-get');
 import * as assert from 'assert';
 import request from '../../../../request';
@@ -12,28 +11,21 @@ describe(commands.LIST_SITESCRIPT_GET, () => {
   let vorpal: Vorpal;
   let log: any[];
   let cmdInstance: any;
-  let trackEvent: any;
-  let telemetry: any;
 
   before(() => {
     sinon.stub(auth, 'restoreAuth').callsFake(() => Promise.resolve());
-    sinon.stub(auth, 'getAccessToken').callsFake(() => { return Promise.resolve('ABC'); });
-    sinon.stub(command as any, 'getRequestDigest').callsFake(() => Promise.resolve({ FormDigestValue: 'ABC' }));
-    trackEvent = sinon.stub(appInsights, 'trackEvent').callsFake((t) => {
-      telemetry = t;
-    });
+    auth.service.connected = true;
   });
 
   beforeEach(() => {
     vorpal = require('../../../../vorpal-init');
     log = [];
     cmdInstance = {
+      action: command.action(),
       log: (msg: string) => {
         log.push(msg);
       }
     };
-    auth.site = new Site();
-    telemetry = null;
   });
 
   afterEach(() => {
@@ -46,11 +38,9 @@ describe(commands.LIST_SITESCRIPT_GET, () => {
 
   after(() => {
     Utils.restore([
-      appInsights.trackEvent,
-      auth.getAccessToken,
-      auth.restoreAuth,
-      (command as any).getRequestDigest
+      auth.restoreAuth
     ]);
+    auth.service.connected = false;
   });
 
   it('has correct name', () => {
@@ -59,47 +49,6 @@ describe(commands.LIST_SITESCRIPT_GET, () => {
 
   it('has a description', () => {
     assert.notEqual(command.description, null);
-  });
-
-  it('calls telemetry', (done) => {
-    cmdInstance.action = command.action();
-    cmdInstance.action({ options: {} }, () => {
-      try {
-        assert(trackEvent.called);
-        done();
-      }
-      catch (e) {
-        done(e);
-      }
-    });
-  });
-
-  it('logs correct telemetry event', (done) => {
-    cmdInstance.action = command.action();
-    cmdInstance.action({ options: {} }, () => {
-      try {
-        assert.equal(telemetry.name, commands.LIST_SITESCRIPT_GET);
-        done();
-      }
-      catch (e) {
-        done(e);
-      }
-    });
-  });
-
-  it('aborts when not connected to a SharePoint site', (done) => {
-    auth.site = new Site();
-    auth.site.connected = false;
-    cmdInstance.action = command.action();
-    cmdInstance.action({ options: { debug: false, webUrl: 'https://contoso.sharepoint.com/sites/team1', title: 'Documents' } }, (err?: any) => {
-      try {
-        assert.equal(JSON.stringify(err), JSON.stringify(new CommandError('Log in to a SharePoint Online site first')));
-        done();
-      }
-      catch (e) {
-        done(e);
-      }
-    });
   });
 
   it('extracts the site script from the given list if title option is passed (debug)', (done) => {
@@ -190,11 +139,6 @@ describe(commands.LIST_SITESCRIPT_GET, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso-admin.sharepoint.com';
-    auth.site.tenantId = 'abc';
-    cmdInstance.action = command.action();
     cmdInstance.action({
       options: {
         debug: true,
@@ -370,11 +314,6 @@ describe(commands.LIST_SITESCRIPT_GET, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso-admin.sharepoint.com';
-    auth.site.tenantId = 'abc';
-    cmdInstance.action = command.action();
     cmdInstance.action({
       options: {
         webUrl: 'https://contoso.sharepoint.com/sites/team1',
@@ -549,11 +488,6 @@ describe(commands.LIST_SITESCRIPT_GET, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso-admin.sharepoint.com';
-    auth.site.tenantId = 'abc';
-    cmdInstance.action = command.action();
     cmdInstance.action({
       options: {
         debug: true,
@@ -729,11 +663,6 @@ describe(commands.LIST_SITESCRIPT_GET, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso-admin.sharepoint.com';
-    auth.site.tenantId = 'abc';
-    cmdInstance.action = command.action();
     cmdInstance.action({
       options: {
         webUrl: 'https://contoso.sharepoint.com/sites/team1',
@@ -840,11 +769,6 @@ describe(commands.LIST_SITESCRIPT_GET, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso-admin.sharepoint.com';
-    auth.site.tenantId = 'abc';
-    cmdInstance.action = command.action();
     cmdInstance.action({
       options: {
         webUrl: 'https://contoso.sharepoint.com/sites/team1',
@@ -881,11 +805,6 @@ describe(commands.LIST_SITESCRIPT_GET, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso-admin.sharepoint.com';
-    auth.site.tenantId = 'abc';
-    cmdInstance.action = command.action();
     cmdInstance.action({
       options: {
         webUrl: 'https://contoso.sharepoint.com/sites/team1',
@@ -921,11 +840,6 @@ describe(commands.LIST_SITESCRIPT_GET, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso-admin.sharepoint.com';
-    auth.site.tenantId = 'abc';
-    cmdInstance.action = command.action();
     cmdInstance.action({
       options: {
         webUrl: 'https://contoso.sharepoint.com/sites/team1',
@@ -951,11 +865,6 @@ describe(commands.LIST_SITESCRIPT_GET, () => {
       return Promise.reject('Invalid request');
     });
 
-    auth.site = new Site();
-    auth.site.connected = true;
-    auth.site.url = 'https://contoso.sharepoint.com';
-    cmdInstance.action = command.action();
-
     cmdInstance.action({
       options: {
         webUrl: 'https://contoso.sharepoint.com/sites/team1',
@@ -964,7 +873,6 @@ describe(commands.LIST_SITESCRIPT_GET, () => {
         debug: false,
       }
     }, () => {
-
       try {
         assert(1 === 1);
         done();
@@ -1055,5 +963,4 @@ describe(commands.LIST_SITESCRIPT_GET, () => {
     Utils.restore(vorpal.find);
     assert(containsExamples);
   });
-
 });

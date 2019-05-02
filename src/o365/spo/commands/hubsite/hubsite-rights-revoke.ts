@@ -1,4 +1,3 @@
-import auth from '../../SpoAuth';
 import { ContextInfo, ClientSvcResponse, ClientSvcResponseContents } from '../../spo';
 import config from '../../../../config';
 import request from '../../../../request';
@@ -39,24 +38,20 @@ class SpoHubSiteRightsRevokeCommand extends SpoCommand {
     return telemetryProps;
   }
 
-  protected requiresTenantAdmin(): boolean {
-    return true;
-  }
-
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: (err?: any) => void): void {
     const revokeRights = (): void => {
+      let spoAdminUrl: string = '';
+
       if (this.verbose) {
         cmd.log(`Revoking rights for ${args.options.principals} from ${args.options.url}...`);
       }
 
-      auth
-        .ensureAccessToken(auth.service.resource, cmd, this.debug)
-        .then((accessToken: string): Promise<ContextInfo> => {
-          if (this.debug) {
-            cmd.log(`Retrieved access token ${accessToken}. Retrieving request digest...`);
-          }
+      this
+        .getSpoAdminUrl(cmd, this.debug)
+        .then((_spoAdminUrl: string): Promise<ContextInfo> => {
+          spoAdminUrl = _spoAdminUrl;
 
-          return this.getRequestDigest(cmd, this.debug);
+          return this.getRequestDigest(spoAdminUrl);
         })
         .then((res: ContextInfo): Promise<string> => {
           const principals: string = args.options.principals
@@ -65,9 +60,8 @@ class SpoHubSiteRightsRevokeCommand extends SpoCommand {
             .join('');
 
           const requestOptions: any = {
-            url: `${auth.site.url}/_vti_bin/client.svc/ProcessQuery`,
+            url: `${spoAdminUrl}/_vti_bin/client.svc/ProcessQuery`,
             headers: {
-              authorization: `Bearer ${auth.service.accessToken}`,
               'X-RequestDigest': res.FormDigestValue
             },
             body: `<Request AddExpandoFieldTypeSuffix="true" SchemaVersion="15.0.0.0" LibraryVersion="16.0.0.0" ApplicationName="${config.applicationName}" xmlns="http://schemas.microsoft.com/sharepoint/clientquery/2009"><Actions><ObjectPath Id="10" ObjectPathId="9" /><Method Name="RevokeHubSiteRights" Id="11" ObjectPathId="9"><Parameters><Parameter Type="String">${Utils.escapeXml(args.options.url)}</Parameter><Parameter Type="Array">${principals}</Parameter></Parameters></Method></Actions><ObjectPaths><Constructor Id="9" TypeId="{268004ae-ef6b-4e9b-8425-127220d84719}" /></ObjectPaths></Request>`
@@ -154,20 +148,14 @@ class SpoHubSiteRightsRevokeCommand extends SpoCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(commands.HUBSITE_RIGHTS_REVOKE).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to a SharePoint Online tenant admin site,
-  using the ${chalk.blue(commands.LOGIN)} command.
+      `  ${chalk.yellow('Important:')} to use this command you have to have permissions to access
+    the tenant admin site.
                 
   Remarks:
 
     ${chalk.yellow('Attention:')} This command is based on a SharePoint API that is currently
     in preview and is subject to change once the API reached general
     availability.
-
-    To revoke rights to join sites to a hub site, you have to first log in to
-    a tenant admin site using the ${chalk.blue(commands.LOGIN)} command,
-    eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN} https://contoso-admin.sharepoint.com`)}.
-    If you are logged in to a different site and will try to revoke rights,
-    you will get an error.
 
   Examples:
   
