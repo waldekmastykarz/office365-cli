@@ -42,7 +42,8 @@ class SpoWebReindexCommand extends SpoCommand {
     let requestDigest: string = '';
     let webIdentityResp: IdentityResponse;
 
-    this.getRequestDigest(args.options.webUrl)
+    this
+      .getRequestDigest(args.options.webUrl)
       .then((res: ContextInfo): Promise<IdentityResponse> => {
         requestDigest = res.FormDigestValue;
 

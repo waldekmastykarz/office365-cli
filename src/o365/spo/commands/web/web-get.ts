@@ -37,7 +37,8 @@ class SpoWebGetCommand extends SpoCommand {
       json: true
     };
 
-    request.get<WebPropertiesCollection>(requestOptions)
+    request
+      .get<WebPropertiesCollection>(requestOptions)
       .then((webProperties: WebPropertiesCollection): void => {
         cmd.log(webProperties);
         cb();

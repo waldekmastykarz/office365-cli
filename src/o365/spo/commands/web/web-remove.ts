@@ -48,7 +48,8 @@ class SpoWebAddCommand extends SpoCommand {
         cmd.log(`Deleting subsite ${args.options.webUrl} ...`);
       }
 
-      request.post(requestOptions)
+      request
+        .post(requestOptions)
         .then((): void => {
           if (this.verbose) {
             cmd.log(vorpal.chalk.green('DONE'));

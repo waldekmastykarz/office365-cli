@@ -39,8 +39,7 @@ describe(commands.WEB_LIST, () => {
 
   after(() => {
     Utils.restore([
-      auth.restoreAuth,
-      request.get
+      auth.restoreAuth
     ]);
     auth.service.connected = false;
   });

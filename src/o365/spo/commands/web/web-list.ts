@@ -47,7 +47,8 @@ class SpoWebListCommand extends SpoCommand {
       json: true
     };
 
-    request.get<WebPropertiesCollection>(requestOptions)
+    request
+      .get<WebPropertiesCollection>(requestOptions)
       .then((webProperties: WebPropertiesCollection): void => {
         if (args.options.output === 'json') {
           cmd.log(webProperties);

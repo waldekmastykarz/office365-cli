@@ -19,7 +19,6 @@ interface Options extends GlobalOptions {
 }
 
 class SpoWebClientSideWebPartListCommand extends SpoCommand {
-
   public get name(): string {
     return commands.WEB_CLIENTSIDEWEBPART_LIST;
   }
@@ -37,7 +36,8 @@ class SpoWebClientSideWebPartListCommand extends SpoCommand {
       json: true
     };
 
-    request.get<GetClientSideWebPartsRsp>(requestOptions)
+    request
+      .get<GetClientSideWebPartsRsp>(requestOptions)
       .then((res: GetClientSideWebPartsRsp): void => {
         const clientSideWebParts: any[] = [];
         res.value.forEach(component => {

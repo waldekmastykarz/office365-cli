@@ -6,8 +6,7 @@ import { ContextInfo, ClientSvcResponse, ClientSvcResponseContents } from '../..
 import {
   CommandOption,
   CommandValidate,
-  CommandError,
-
+  CommandError
 } from '../../../../Command';
 import SpoCommand from '../../SpoCommand';
 import { PermissionKind, BasePermissions } from './../../common/base-permissions';
@@ -46,7 +45,6 @@ class SpoWebAddCommand extends SpoCommand {
     telemetryProps.locale = args.options.locale || '1033';
     telemetryProps.breakInheritance = args.options.breakInheritance || false;
     telemetryProps.inheritNavigation = args.options.inheritNavigation || false;
-
     return telemetryProps;
   }
 
@@ -54,7 +52,8 @@ class SpoWebAddCommand extends SpoCommand {
     let siteInfo: any = null;
     let subsiteFullUrl: string = '';
 
-    this.getRequestDigest(args.options.parentWebUrl)
+    this
+      .getRequestDigest(args.options.parentWebUrl)
       .then((res: ContextInfo): Promise<any> => {
         const requestOptions: any = {
           url: `${args.options.parentWebUrl}/_api/web/webinfos/add`,

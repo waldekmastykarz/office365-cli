@@ -88,7 +88,8 @@ class SpoWebSetCommand extends SpoCommand {
       cmd.log(`Updating properties of subsite ${args.options.webUrl}...`);
     }
 
-    request.patch(requestOptions)
+    request
+      .patch(requestOptions)
       .then((): void => {
         if (this.debug) {
           cmd.log(vorpal.chalk.green('DONE'));
