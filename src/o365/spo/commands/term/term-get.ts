@@ -47,14 +47,11 @@ class SpoTermGetCommand extends SpoCommand {
     return telemetryProps;
   }
 
-  protected requiresTenantAdmin(): boolean {
-    return true;
-  }
-
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: (err?: any) => void): void {
     let spoAdminUrl: string = '';
 
-    this.getSpoAdminUrl(cmd, this.debug)
+    this
+      .getSpoAdminUrl(cmd, this.debug)
       .then((_spoAdminUrl: string): Promise<ContextInfo> => {
         spoAdminUrl = _spoAdminUrl;
         return this.getRequestDigest(spoAdminUrl);
@@ -195,7 +192,10 @@ class SpoTermGetCommand extends SpoCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(commands.TERM_GET).helpInformation());
     log(
-      `  Remarks:
+      `  ${chalk.yellow('Important:')} to use this command you have to have permissions to access
+    the tenant admin site.
+      
+  Remarks:
 
     When retrieving term by its ID, it's sufficient to specify just the ID.
     When retrieving it by its name however, you need to specify the parent

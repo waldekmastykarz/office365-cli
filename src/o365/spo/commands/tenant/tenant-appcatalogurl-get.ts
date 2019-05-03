@@ -14,10 +14,9 @@ class SpoTenantAppCatalogUrlGetCommand extends SpoCommand {
   }
 
   public commandAction(cmd: CommandInstance, args: any, cb: (err?: any) => void): void {
-
-    this.getSpoAdminUrl(cmd, this.debug)
+    this
+      .getSpoAdminUrl(cmd, this.debug)
       .then((spoAdminUrl: string): Promise<string> => {
-
         const requestOptions: any = {
           url: `${spoAdminUrl}/_api/SP_TenantSettings_Current`,
           headers: {
@@ -46,7 +45,10 @@ class SpoTenantAppCatalogUrlGetCommand extends SpoCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  Examples:
+      `  ${chalk.yellow('Important:')} to use this command you have to have permissions to access
+    the tenant admin site.
+    
+  Examples:
   
     Get the URL of the tenant app catalog
       ${chalk.grey(config.delimiter)} ${commands.TENANT_APPCATALOGURL_GET}

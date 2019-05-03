@@ -32,10 +32,6 @@ class SpoTermSetListCommand extends SpoCommand {
     return 'Lists taxonomy term sets from the given term group';
   }
 
-  protected requiresTenantAdmin(): boolean {
-    return true;
-  }
-
   public getTelemetryProperties(args: CommandArgs): any {
     const telemetryProps: any = super.getTelemetryProperties(args);
     telemetryProps.termGroupId = typeof args.options.termGroupId !== 'undefined';
@@ -46,7 +42,8 @@ class SpoTermSetListCommand extends SpoCommand {
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: (err?: any) => void): void {
     let spoAdminUrl: string = '';
 
-    this.getSpoAdminUrl(cmd, this.debug)
+    this
+      .getSpoAdminUrl(cmd, this.debug)
       .then((_spoAdminUrl: string): Promise<ContextInfo> => {
         spoAdminUrl = _spoAdminUrl;
         return this.getRequestDigest(spoAdminUrl);
@@ -139,7 +136,10 @@ class SpoTermSetListCommand extends SpoCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(commands.TERM_SET_LIST).helpInformation());
     log(
-      `  Examples:
+      `  ${chalk.yellow('Important:')} to use this command you have to have permissions to access
+    the tenant admin site.
+    
+  Examples:
   
     List taxonomy term sets from the term group with the given name
       ${chalk.grey(config.delimiter)} ${commands.TERM_SET_LIST} --termGroupName PnPTermSets

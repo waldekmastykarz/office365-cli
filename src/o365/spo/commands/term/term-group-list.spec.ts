@@ -57,10 +57,6 @@ describe(commands.TERM_GROUP_LIST, () => {
     assert.notEqual(command.description, null);
   });
 
-  it('requires tenant admin', () => {
-    assert.equal((command as any).requiresTenantAdmin(), true);
-  });
-
   it('lists taxonomy term groups (debug)', (done) => {
     sinon.stub(request, 'post').callsFake((opts) => {
       if (opts.url.indexOf('/_vti_bin/client.svc/ProcessQuery') > -1 &&

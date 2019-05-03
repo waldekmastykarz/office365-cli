@@ -73,10 +73,6 @@ describe(commands.TENANT_SETTINGS_SET, () => {
     assert.notEqual(command.description, null);
   });
 
-  it('requires a tenant admin', () => {
-    assert.equal((command as any).requiresTenantAdmin(), true);
-  });
-
   it('supports debug mode', () => {
     const options = (command.options() as CommandOption[]);
     let containsDebugOption = false;

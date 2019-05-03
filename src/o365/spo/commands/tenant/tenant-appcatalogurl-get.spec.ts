@@ -69,7 +69,6 @@ describe(commands.TENANT_APPCATALOGURL_GET, () => {
     assert(containsDebugOption);
   });
 
-
   it('has help referring to the right command', () => {
     const cmd: any = {
       log: (msg: string) => { },

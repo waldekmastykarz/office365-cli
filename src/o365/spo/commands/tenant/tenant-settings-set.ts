@@ -110,10 +110,6 @@ class SpoTenantSettingsSetCommand extends SpoCommand {
     return 'Sets tenant global settings';
   }
 
-  protected requiresTenantAdmin(): boolean {
-    return true;
-  }
-
   public getTelemetryProperties(args: CommandArgs): any {
     const telemetryProps: any = super.getTelemetryProperties(args);
     telemetryProps.MinCompatibilityLevel = (!(!args.options.MinCompatibilityLevel)).toString();
@@ -761,7 +757,10 @@ class SpoTenantSettingsSetCommand extends SpoCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  Examples:
+      `  ${chalk.yellow('Important:')} to use this command you have to have permissions to access
+    the tenant admin site.
+    
+  Examples:
   
     Sets single tenant global setting
       ${chalk.grey(config.delimiter)} ${commands.TENANT_SETTINGS_SET} --UserVoiceForFeedbackEnabled true

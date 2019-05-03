@@ -57,10 +57,6 @@ describe(commands.TERM_GET, () => {
     assert.notEqual(command.description, null);
   });
 
-  it('requires tenant admin', () => {
-    assert.equal((command as any).requiresTenantAdmin(), true);
-  });
-
   it('gets taxonomy term by id', (done) => {
     sinon.stub(request, 'post').callsFake((opts) => {
       if (opts.url.indexOf('/_vti_bin/client.svc/ProcessQuery') > -1 &&
