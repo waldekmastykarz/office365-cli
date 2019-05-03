@@ -1,4 +1,3 @@
-import auth from '../../SpoAuth';
 import request from '../../../../request';
 import config from '../../../../config';
 import commands from '../../commands';
@@ -15,13 +14,13 @@ class SpoTenantAppCatalogUrlGetCommand extends SpoCommand {
   }
 
   public commandAction(cmd: CommandInstance, args: any, cb: (err?: any) => void): void {
-    auth
-      .ensureAccessToken(auth.service.resource, cmd, this.debug)
-      .then((): Promise<string> => {
+
+    this.getSpoAdminUrl(cmd, this.debug)
+      .then((spoAdminUrl: string): Promise<string> => {
+
         const requestOptions: any = {
-          url: `${auth.site.url}/_api/SP_TenantSettings_Current`,
+          url: `${spoAdminUrl}/_api/SP_TenantSettings_Current`,
           headers: {
-            authorization: `Bearer ${auth.service.accessToken}`,
             accept: 'application/json;odata=nometadata'
           }
         };
@@ -47,10 +46,7 @@ class SpoTenantAppCatalogUrlGetCommand extends SpoCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to a SharePoint Online
-    tenant admin site, using the ${chalk.blue(commands.LOGIN)} command.
-
-  Examples:
+      `  Examples:
   
     Get the URL of the tenant app catalog
       ${chalk.grey(config.delimiter)} ${commands.TENANT_APPCATALOGURL_GET}
