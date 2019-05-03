@@ -1,4 +1,3 @@
-import auth from '../../SpoAuth';
 import config from '../../../../config';
 import commands from '../../commands';
 import GlobalOptions from '../../../../GlobalOptions';
@@ -9,7 +8,6 @@ import {
 } from '../../../../Command';
 import SpoCommand from '../../SpoCommand';
 import Utils from '../../../../Utils';
-import { Auth } from '../../../../Auth';
 
 const vorpal: Vorpal = require('../../../../vorpal-init');
 
@@ -46,47 +44,30 @@ class SpoListViewRemoveCommand extends SpoCommand {
   }
 
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
-    const resource: string = Auth.getResourceFromUrl(args.options.webUrl);
-    let siteAccessToken: string = '';
-
     const removeViewFromList: () => void = (): void => {
-      if (this.debug) {
-        cmd.log(`Retrieving access token for ${resource}...`);
+      if (this.verbose) {
+        const list: string = args.options.listId ? encodeURIComponent(args.options.listId as string) : encodeURIComponent(args.options.listTitle as string);
+        cmd.log(`Removing view ${args.options.viewId || args.options.viewTitle} from list ${list} in site at ${args.options.webUrl}...`);
       }
 
-      auth
-        .getAccessToken(resource, auth.service.refreshToken as string, cmd, this.debug)
-        .then((accessToken: string): Promise<void> => {
-          siteAccessToken = accessToken;
+      let requestUrl: string = '';
+      const listSelector: string = args.options.listId ? `(guid'${encodeURIComponent(args.options.listId)}')` : `/GetByTitle('${encodeURIComponent(args.options.listTitle as string)}')`;
+      const viewSelector: string = args.options.viewId ? `(guid'${encodeURIComponent(args.options.viewId)}')` : `/GetByTitle('${encodeURIComponent(args.options.viewTitle as string)}')`;
 
-          if (this.debug) {
-            cmd.log(`Retrieved access token ${accessToken}.`);
-          }
+      requestUrl = `${args.options.webUrl}/_api/web/lists${listSelector}/views${viewSelector}`;
 
-          if (this.verbose) {
-            const list: string = args.options.listId ? encodeURIComponent(args.options.listId as string) : encodeURIComponent(args.options.listTitle as string);
-            cmd.log(`Removing view ${args.options.viewId || args.options.viewTitle} from list ${list} in site at ${args.options.webUrl}...`);
-          }
+      const requestOptions: any = {
+        url: requestUrl,
+        headers: {
+          'X-HTTP-Method': 'DELETE',
+          'If-Match': '*',
+          'accept': 'application/json;odata=nometadata'
+        },
+        json: true
+      };
 
-          let requestUrl: string = '';
-          const listSelector: string = args.options.listId ? `(guid'${encodeURIComponent(args.options.listId)}')` : `/GetByTitle('${encodeURIComponent(args.options.listTitle as string)}')`;
-          const viewSelector: string = args.options.viewId ? `(guid'${encodeURIComponent(args.options.viewId)}')` : `/GetByTitle('${encodeURIComponent(args.options.viewTitle as string)}')`;
-
-          requestUrl = `${args.options.webUrl}/_api/web/lists${listSelector}/views${viewSelector}`;
-
-          const requestOptions: any = {
-            url: requestUrl,
-            headers: {
-              authorization: `Bearer ${siteAccessToken}`,
-              'X-HTTP-Method': 'DELETE',
-              'If-Match': '*',
-              'accept': 'application/json;odata=nometadata'
-            },
-            json: true
-          };
-
-          return request.post(requestOptions);
-        })
+      request
+        .post(requestOptions)
         .then((): void => {
           // REST post call doesn't return anything
           cb();
@@ -192,16 +173,7 @@ class SpoListViewRemoveCommand extends SpoCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to SharePoint,
-    using the ${chalk.blue(commands.LOGIN)} command.
-  
-  Remarks:
-  
-    To remove a view from a list, you have to first log in to SharePoint
-    using the ${chalk.blue(commands.LOGIN)} command,
-    eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN} https://contoso.sharepoint.com`)}.
-        
-  Examples:
+      `  Examples:
   
     Remove view with ID ${chalk.grey('cc27a922-8224-4296-90a5-ebbc54da2e81')} from the list
     with ID ${chalk.grey('0cd891ef-afce-4e55-b836-fce03286cccf')} located in site
