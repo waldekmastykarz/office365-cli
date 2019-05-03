@@ -30,14 +30,11 @@ class SpoThemeApplyCommand extends SpoCommand {
     return 'Applies theme to the specified site';
   }
 
-  protected requiresTenantAdmin(): boolean {
-    return true;
-  }
-
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
     let spoAdminUrl: string = '';
 
-    this.getSpoAdminUrl(cmd, this.debug)
+    this
+      .getSpoAdminUrl(cmd, this.debug)
       .then((_spoAdminUrl: string): Promise<ContextInfo> => {
         spoAdminUrl = _spoAdminUrl;
         return this.getRequestDigest(spoAdminUrl);
@@ -65,9 +62,7 @@ class SpoThemeApplyCommand extends SpoCommand {
           return Promise.reject(contents.ErrorInfo.ErrorMessage || 'ClientSvc unknown error');
         }
         return Promise.resolve();
-
       }).then((): void => {
-
         if (this.verbose) {
           cmd.log(vorpal.chalk.green('DONE'));
         }
@@ -113,7 +108,10 @@ class SpoThemeApplyCommand extends SpoCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  Examples:
+      `  ${chalk.yellow('Important:')} to use this command you have to have permissions to access
+    the tenant admin site.
+      
+  Examples:
   
     Apply theme to the specified site
       ${chalk.grey(config.delimiter)} ${commands.THEME_APPLY} --name Contoso-Blue --webUrl https://contoso.sharepoint.com/sites/project-x

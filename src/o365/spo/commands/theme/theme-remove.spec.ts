@@ -60,10 +60,6 @@ describe(commands.THEME_REMOVE, () => {
     assert.notEqual(command.description, null);
   });
 
-  it('requires tenant admin', () => {
-    assert.equal((command as any).requiresTenantAdmin(), true);
-  });
-
   it('should prompt before removing theme when confirmation argument not passed', (done) => {
     cmdInstance.action({ options: { debug: false, name: 'Contoso' } }, () => {
       let promptIssued = false;

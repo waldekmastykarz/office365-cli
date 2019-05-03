@@ -34,13 +34,10 @@ class SpoThemeRemoveCommand extends SpoCommand {
     return telemetryProps;
   }
 
-  protected requiresTenantAdmin(): boolean {
-    return true;
-  }
-
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
     const removeTheme = (): void => {
-      this.getSpoAdminUrl(cmd, this.debug)
+      this
+        .getSpoAdminUrl(cmd, this.debug)
         .then((spoAdminUrl: string): Promise<void> => {
           if (this.verbose) {
             cmd.log(`Removing theme from tenant...`);
@@ -118,7 +115,10 @@ class SpoThemeRemoveCommand extends SpoCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  Examples:
+      `  ${chalk.yellow('Important:')} to use this command you have to have permissions to access
+    the tenant admin site.
+  
+  Examples:
 
     Remove theme. Will prompt for confirmation before removing the theme
       ${chalk.grey(config.delimiter)} ${commands.THEME_REMOVE} --name Contoso-Blue

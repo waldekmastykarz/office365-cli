@@ -29,14 +29,11 @@ class SpoThemeGetCommand extends SpoCommand {
     return 'Gets custom theme information';
   }
 
-  protected requiresTenantAdmin(): boolean {
-    return true;
-  }
-
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
     let spoAdminUrl: string = '';
 
-    this.getSpoAdminUrl(cmd, this.debug)
+    this
+      .getSpoAdminUrl(cmd, this.debug)
       .then((_spoAdminUrl: string): Promise<ContextInfo> => {
         spoAdminUrl = _spoAdminUrl;
         return this.getRequestDigest(spoAdminUrl);
@@ -66,7 +63,6 @@ class SpoThemeGetCommand extends SpoCommand {
         return Promise.resolve(json);
       })
       .then((json: any): void => {
-
         const { _ObjectType_, ...theme } = json[6];
         cmd.log(theme);
 
@@ -102,7 +98,10 @@ class SpoThemeGetCommand extends SpoCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  Examples:
+      `  ${chalk.yellow('Important:')} to use this command you have to have permissions to access
+    the tenant admin site.
+    
+  Examples:
   
     Get information about a theme
       ${chalk.grey(config.delimiter)} ${commands.THEME_GET} --name Contoso-Blue

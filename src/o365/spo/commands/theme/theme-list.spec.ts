@@ -54,10 +54,6 @@ describe(commands.THEME_LIST, () => {
     assert.notEqual(command.description, null);
   });
 
-  it('requires tenant admin', () => {
-    assert.equal((command as any).requiresTenantAdmin(), true);
-  });
-
   it('uses correct API url', (done) => {
     const postStub: sinon.SinonStub = sinon.stub(request, 'post').callsFake((opts) => {
       if (opts.url.indexOf('/_api/thememanager/GetTenantThemingOptions') > -1) {

@@ -39,14 +39,11 @@ class SpoThemeSetCommand extends SpoCommand {
     return telemetryProps;
   }
 
-  protected requiresTenantAdmin(): boolean {
-    return true;
-  }
-
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
     let spoAdminUrl: string = '';
 
-    this.getSpoAdminUrl(cmd, this.debug)
+    this
+      .getSpoAdminUrl(cmd, this.debug)
       .then((_spoAdminUrl: string): Promise<ContextInfo> => {
         spoAdminUrl = _spoAdminUrl;
         return this.getRequestDigest(spoAdminUrl);
@@ -88,7 +85,6 @@ class SpoThemeSetCommand extends SpoCommand {
         return Promise.resolve();
 
       }).then((): void => {
-
         if (this.verbose) {
           cmd.log(vorpal.chalk.green('DONE'));
         }
@@ -143,7 +139,10 @@ class SpoThemeSetCommand extends SpoCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  Examples:
+      `  ${chalk.yellow('Important:')} to use this command you have to have permissions to access
+    the tenant admin site.
+    
+  Examples:
   
     Add or update a theme from a theme JSON file
       ${chalk.grey(config.delimiter)} ${commands.THEME_SET} --name Contoso-Blue --filePath /Users/rjesh/themes/contoso-blue.json

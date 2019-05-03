@@ -19,14 +19,10 @@ class SpoThemeListCommand extends SpoCommand {
     return 'Retrieves the list of custom themes';
   }
 
-  protected requiresTenantAdmin(): boolean {
-    return true;
-  }
-
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
-    this.getSpoAdminUrl(cmd, this.debug)
+    this
+      .getSpoAdminUrl(cmd, this.debug)
       .then((spoAdminUrl: string): Promise<any> => {
-
         if (this.verbose) {
           cmd.log(`Retrieving themes from tenant store...`);
         }
@@ -66,7 +62,10 @@ class SpoThemeListCommand extends SpoCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  Examples:
+      `  ${chalk.yellow('Important:')} to use this command you have to have permissions to access
+    the tenant admin site.
+    
+  Examples:
   
     List available themes
       ${chalk.grey(config.delimiter)} ${commands.THEME_LIST}
