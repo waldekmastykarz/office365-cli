@@ -30,21 +30,21 @@ class SpoSiteDesignRunStatusGetCommand extends SpoCommand {
   }
 
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
-        const body: any = {
-          runId: args.options.runId
-        };
+    const body: any = {
+      runId: args.options.runId
+    };
 
-        const requestOptions: any = {
-          url: `${args.options.webUrl}/_api/Microsoft.Sharepoint.Utilities.WebTemplateExtensions.SiteScriptUtility.GetSiteDesignRunStatus`,
-          headers: {
-            accept: 'application/json;odata=nometadata',
-            'content-type': 'application/json;odata=nometadata'
-          },
-          body: body,
-          json: true
-        };
+    const requestOptions: any = {
+      url: `${args.options.webUrl}/_api/Microsoft.Sharepoint.Utilities.WebTemplateExtensions.SiteScriptUtility.GetSiteDesignRunStatus`,
+      headers: {
+        accept: 'application/json;odata=nometadata',
+        'content-type': 'application/json;odata=nometadata'
+      },
+      body: body,
+      json: true
+    };
 
-       request.post<{ value: SiteScriptActionStatus[] }>(requestOptions)
+    request.post<{ value: SiteScriptActionStatus[] }>(requestOptions)
       .then((res: { value: SiteScriptActionStatus[] }): void => {
         if (args.options.output === 'json') {
           cmd.log(res.value);

@@ -47,12 +47,12 @@ class SpoStorageEntityRemoveCommand extends SpoCommand {
       }
 
       this
-      .getSpoAdminUrl(cmd, this.debug)
-      .then((_spoAdminUrl: string): Promise<ContextInfo> => {
-        spoAdminUrl = _spoAdminUrl;
-        return this.getRequestDigest(spoAdminUrl);
-      })
-      .then((res: ContextInfo): Promise<string> => {
+        .getSpoAdminUrl(cmd, this.debug)
+        .then((_spoAdminUrl: string): Promise<ContextInfo> => {
+          spoAdminUrl = _spoAdminUrl;
+          return this.getRequestDigest(spoAdminUrl);
+        })
+        .then((res: ContextInfo): Promise<string> => {
           const requestOptions: any = {
             url: `${spoAdminUrl}/_vti_bin/client.svc/ProcessQuery`,
             headers: {

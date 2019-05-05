@@ -31,7 +31,7 @@ class SpoStorageEntityGetCommand extends SpoCommand {
     this
       .getSpoAdminUrl(cmd, this.debug)
       .then((spoAdminUrl: string): Promise<TenantProperty> => {
-       
+
         const requestOptions: any = {
           url: `${spoAdminUrl}/_api/web/GetStorageEntity('${encodeURIComponent(args.options.key)}')`,
           headers: {

@@ -131,7 +131,7 @@ describe(commands.STORAGEENTITY_SET, () => {
   it('escapes XML in user input', (done) => {
     const postStub: sinon.SinonStub = sinon.stub(request, 'post').callsFake((opts) => {
       if (opts.url.indexOf('/_vti_bin/client.svc/ProcessQuery') > -1) {
-            return Promise.resolve(JSON.stringify([{ "SchemaVersion": "15.0.0.0", "LibraryVersion": "16.0.7018.1204", "ErrorInfo": null, "TraceCorrelationId": "4456299e-d09e-4000-ae61-ddde716daa27" }, 31, { "IsNull": false }, 33, { "IsNull": false }, 35, { "IsNull": false }]));
+        return Promise.resolve(JSON.stringify([{ "SchemaVersion": "15.0.0.0", "LibraryVersion": "16.0.7018.1204", "ErrorInfo": null, "TraceCorrelationId": "4456299e-d09e-4000-ae61-ddde716daa27" }, 31, { "IsNull": false }, 33, { "IsNull": false }, 35, { "IsNull": false }]));
       }
 
       return Promise.reject('Invalid request');
@@ -152,14 +152,14 @@ describe(commands.STORAGEENTITY_SET, () => {
   it('correctly handles a generic error when setting tenant property', (done) => {
     const postStub: sinon.SinonStub = sinon.stub(request, 'post').callsFake((opts) => {
       if (opts.url.indexOf('/_vti_bin/client.svc/ProcessQuery') > -1) {
-            return Promise.resolve(JSON.stringify([
-              {
-                "SchemaVersion": "15.0.0.0", "LibraryVersion": "16.0.7018.1204", "ErrorInfo": {
-                  "ErrorMessage": "An error has occurred", "ErrorValue": null, "TraceCorrelationId": "965d299e-a0c6-4000-8546-cc244881a129", "ErrorCode": -1, "ErrorTypeName": "Microsoft.SharePoint.PublicCdn.TenantCdnAdministrationException"
-                }, "TraceCorrelationId": "965d299e-a0c6-4000-8546-cc244881a129"
-              }
-            ]));
+        return Promise.resolve(JSON.stringify([
+          {
+            "SchemaVersion": "15.0.0.0", "LibraryVersion": "16.0.7018.1204", "ErrorInfo": {
+              "ErrorMessage": "An error has occurred", "ErrorValue": null, "TraceCorrelationId": "965d299e-a0c6-4000-8546-cc244881a129", "ErrorCode": -1, "ErrorTypeName": "Microsoft.SharePoint.PublicCdn.TenantCdnAdministrationException"
+            }, "TraceCorrelationId": "965d299e-a0c6-4000-8546-cc244881a129"
           }
+        ]));
+      }
 
       return Promise.reject('Invalid request');
     });
@@ -181,13 +181,13 @@ describe(commands.STORAGEENTITY_SET, () => {
   it('correctly handles access denied error when setting tenant property', (done) => {
     const postStub: sinon.SinonStub = sinon.stub(request, 'post').callsFake((opts) => {
       if (opts.url.indexOf('/_vti_bin/client.svc/ProcessQuery') > -1) {
-            return Promise.resolve(JSON.stringify([
-              {
-                "SchemaVersion": "15.0.0.0", "LibraryVersion": "16.0.7018.1204", "ErrorInfo": {
-                  "ErrorMessage": "Access denied.", "ErrorValue": null, "TraceCorrelationId": "965d299e-a0c6-4000-8546-cc244881a129", "ErrorCode": -1, "ErrorTypeName": "Microsoft.SharePoint.PublicCdn.TenantCdnAdministrationException"
-                }, "TraceCorrelationId": "965d299e-a0c6-4000-8546-cc244881a129"
-              }
-            ]));
+        return Promise.resolve(JSON.stringify([
+          {
+            "SchemaVersion": "15.0.0.0", "LibraryVersion": "16.0.7018.1204", "ErrorInfo": {
+              "ErrorMessage": "Access denied.", "ErrorValue": null, "TraceCorrelationId": "965d299e-a0c6-4000-8546-cc244881a129", "ErrorCode": -1, "ErrorTypeName": "Microsoft.SharePoint.PublicCdn.TenantCdnAdministrationException"
+            }, "TraceCorrelationId": "965d299e-a0c6-4000-8546-cc244881a129"
+          }
+        ]));
       }
 
       return Promise.reject('Invalid request');
@@ -339,7 +339,7 @@ describe(commands.STORAGEENTITY_SET, () => {
 
   it('handles promise rejection', (done) => {
     sinon.stub(command as any, 'getSpoAdminUrl').callsFake(() => Promise.reject('error'));
-    
+
     cmdInstance.action({
       options: { debug: true, key: 'Property1', value: 'Lorem', description: 'ipsum', comment: 'dolor', appCatalogUrl: 'https://contoso.sharepoint.com/sites/appcatalog' }
     }, (err?: any) => {

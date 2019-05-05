@@ -39,13 +39,13 @@ class SpoSiteDesignRemoveCommand extends SpoCommand {
     const removeSiteDesign: () => void = (): void => {
       let spoAdminUrl: string = '';
 
-    this
-      .getSpoAdminUrl(cmd, this.debug)
-      .then((_spoAdminUrl: string): Promise<ContextInfo> => {
-        spoAdminUrl = _spoAdminUrl;
-        return this.getRequestDigest(spoAdminUrl);
-      })
-      .then((res: ContextInfo): Promise<void> => {
+      this
+        .getSpoAdminUrl(cmd, this.debug)
+        .then((_spoAdminUrl: string): Promise<ContextInfo> => {
+          spoAdminUrl = _spoAdminUrl;
+          return this.getRequestDigest(spoAdminUrl);
+        })
+        .then((res: ContextInfo): Promise<void> => {
           const requestOptions: any = {
             url: `${spoAdminUrl}/_api/Microsoft.Sharepoint.Utilities.WebTemplateExtensions.SiteScriptUtility.DeleteSiteDesign`,
             headers: {

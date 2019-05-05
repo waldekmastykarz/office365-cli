@@ -50,7 +50,7 @@ describe(commands.STORAGEENTITY_GET, () => {
       if (opts.url.indexOf(`/_api/web/GetStorageEntity('%23myprop')`) > -1) {
         if (opts.headers.accept &&
           opts.headers.accept.indexOf('application/json') === 0) {
-            return Promise.resolve({ Description: 'ipsum', Value: 'dolor' });
+          return Promise.resolve({ Description: 'ipsum', Value: 'dolor' });
         }
       }
 
@@ -225,13 +225,13 @@ describe(commands.STORAGEENTITY_GET, () => {
 
   it('has help referring to the right command', () => {
     const cmd: any = {
-      log: (msg: string) => {},
-      prompt: () => {},
-      helpInformation: () => {}
+      log: (msg: string) => { },
+      prompt: () => { },
+      helpInformation: () => { }
     };
     const find = sinon.stub(vorpal, 'find').callsFake(() => cmd);
     cmd.help = command.help();
-    cmd.help({}, () => {});
+    cmd.help({}, () => { });
     assert(find.calledWith(commands.STORAGEENTITY_GET));
   });
 
@@ -241,12 +241,12 @@ describe(commands.STORAGEENTITY_GET, () => {
       log: (msg: string) => {
         _log.push(msg);
       },
-      prompt: () => {},
-      helpInformation: () => {}
+      prompt: () => { },
+      helpInformation: () => { }
     };
     sinon.stub(vorpal, 'find').callsFake(() => cmd);
     cmd.help = command.help();
-    cmd.help({}, () => {});
+    cmd.help({}, () => { });
     let containsExamples: boolean = false;
     _log.forEach(l => {
       if (l && l.indexOf('Examples:') > -1) {
@@ -260,7 +260,7 @@ describe(commands.STORAGEENTITY_GET, () => {
   it('handles promise rejection', (done) => {
     Utils.restore(request.get);
     sinon.stub(request, 'get').callsFake(() => Promise.reject('error'));
-    
+
     cmdInstance.action({
       options: { options: { debug: true, key: '#myprop' }, appCatalogUrl: 'https://contoso.sharepoint.com/sites/appcatalog' }
     }, (err?: any) => {

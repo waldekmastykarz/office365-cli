@@ -40,12 +40,12 @@ class SpoSiteDesignRightsRevokeCommand extends SpoCommand {
     const revokePermissions: () => void = (): void => {
       let spoAdminUrl: string = '';
 
-    this
-      .getSpoAdminUrl(cmd, this.debug)
-      .then((_spoAdminUrl: string): Promise<ContextInfo> => {
-        spoAdminUrl = _spoAdminUrl;
-        return this.getRequestDigest(spoAdminUrl);
-      })
+      this
+        .getSpoAdminUrl(cmd, this.debug)
+        .then((_spoAdminUrl: string): Promise<ContextInfo> => {
+          spoAdminUrl = _spoAdminUrl;
+          return this.getRequestDigest(spoAdminUrl);
+        })
         .then((res: ContextInfo): Promise<void> => {
           const requestOptions: any = {
             url: `${spoAdminUrl}/_api/Microsoft.Sharepoint.Utilities.WebTemplateExtensions.SiteScriptUtility.RevokeSiteDesignRights`,

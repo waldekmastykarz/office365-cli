@@ -71,7 +71,7 @@ describe(commands.SITESCRIPT_GET, () => {
                 "themeName": "Contoso Theme"
               }
             ],
-            "bindata": { },
+            "bindata": {},
             "version": 1
           }),
           "Description": "My contoso script",
@@ -95,7 +95,7 @@ describe(commands.SITESCRIPT_GET, () => {
                 "themeName": "Contoso Theme"
               }
             ],
-            "bindata": { },
+            "bindata": {},
             "version": 1
           }),
           "Description": "My contoso script",
@@ -126,7 +126,7 @@ describe(commands.SITESCRIPT_GET, () => {
                 "themeName": "Contoso Theme"
               }
             ],
-            "bindata": { },
+            "bindata": {},
             "version": 1
           }),
           "Description": "My contoso script",
@@ -150,7 +150,7 @@ describe(commands.SITESCRIPT_GET, () => {
                 "themeName": "Contoso Theme"
               }
             ],
-            "bindata": { },
+            "bindata": {},
             "version": 1
           }),
           "Description": "My contoso script",

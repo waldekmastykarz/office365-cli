@@ -113,7 +113,7 @@ describe(commands.SITESCRIPT_REMOVE, () => {
   });
 
   it('prompts before removing the specified site script when confirm option not passed', (done) => {
-    
+
     cmdInstance.action({ options: { debug: false, id: 'b2307a39-e878-458b-bc90-03bc578531d6' } }, () => {
       let promptIssued = false;
 
@@ -133,7 +133,7 @@ describe(commands.SITESCRIPT_REMOVE, () => {
 
   it('aborts removing site script when prompt not confirmed', (done) => {
     const postSpy = sinon.spy(request, 'post');
-    
+
     cmdInstance.prompt = (options: any, cb: (result: { continue: boolean }) => void) => {
       cb({ continue: false });
     };
@@ -150,7 +150,7 @@ describe(commands.SITESCRIPT_REMOVE, () => {
 
   it('removes the app when prompt confirmed', (done) => {
     const postStub = sinon.stub(request, 'post').callsFake(() => Promise.resolve());
-    
+
     cmdInstance.prompt = (options: any, cb: (result: { continue: boolean }) => void) => {
       cb({ continue: true });
     };

@@ -74,7 +74,7 @@ describe(commands.STORAGEENTITY_LIST, () => {
 
       return Promise.reject('Invalid request');
     });
-    cmdInstance.action({ options: { debug: true, appCatalogUrl: 'https://contoso.sharepoint.com/sites/appcatalog' }}, () => {
+    cmdInstance.action({ options: { debug: true, appCatalogUrl: 'https://contoso.sharepoint.com/sites/appcatalog' } }, () => {
       try {
         assert(cmdInstanceLogSpy.calledWith([
           {
@@ -109,7 +109,7 @@ describe(commands.STORAGEENTITY_LIST, () => {
 
       return Promise.reject('Invalid request');
     });
-    cmdInstance.action({ options: { debug: false, appCatalogUrl: 'https://contoso.sharepoint.com/sites/appcatalog' }}, () => {
+    cmdInstance.action({ options: { debug: false, appCatalogUrl: 'https://contoso.sharepoint.com/sites/appcatalog' } }, () => {
       try {
         assert.equal(log.length, 0);
         done();
@@ -131,7 +131,7 @@ describe(commands.STORAGEENTITY_LIST, () => {
 
       return Promise.reject('Invalid request');
     });
-    cmdInstance.action({ options: { debug: true, appCatalogUrl: 'https://contoso.sharepoint.com/sites/appcatalog' }}, () => {
+    cmdInstance.action({ options: { debug: true, appCatalogUrl: 'https://contoso.sharepoint.com/sites/appcatalog' } }, () => {
       let correctResponse: boolean = false;
       log.forEach(l => {
         if (!l || typeof l !== 'string') {
@@ -157,13 +157,13 @@ describe(commands.STORAGEENTITY_LIST, () => {
       if (opts.url.indexOf(`/_api/web/AllProperties?$select=storageentitiesindex`) > -1) {
         if (opts.headers.accept &&
           opts.headers.accept.indexOf('application/json') === 0) {
-            return Promise.resolve({ storageentitiesindex: JSON.stringify({}) });
+          return Promise.resolve({ storageentitiesindex: JSON.stringify({}) });
         }
       }
 
       return Promise.reject('Invalid request');
     });
-    cmdInstance.action({ options: { debug: false, appCatalogUrl: 'https://contoso.sharepoint.com/sites/appcatalog' }}, () => {
+    cmdInstance.action({ options: { debug: false, appCatalogUrl: 'https://contoso.sharepoint.com/sites/appcatalog' } }, () => {
       try {
         assert.equal(log.length, 0);
         done();
@@ -179,13 +179,13 @@ describe(commands.STORAGEENTITY_LIST, () => {
       if (opts.url.indexOf(`/_api/web/AllProperties?$select=storageentitiesindex`) > -1) {
         if (opts.headers.accept &&
           opts.headers.accept.indexOf('application/json') === 0) {
-            return Promise.resolve({ storageentitiesindex: JSON.stringify({}) });
+          return Promise.resolve({ storageentitiesindex: JSON.stringify({}) });
         }
       }
 
       return Promise.reject('Invalid request');
     });
-    cmdInstance.action({ options: { debug: true, appCatalogUrl: 'https://contoso.sharepoint.com/sites/appcatalog' }}, () => {
+    cmdInstance.action({ options: { debug: true, appCatalogUrl: 'https://contoso.sharepoint.com/sites/appcatalog' } }, () => {
       let correctResponse: boolean = false;
       log.forEach(l => {
         if (!l || typeof l !== 'string') {
@@ -211,13 +211,13 @@ describe(commands.STORAGEENTITY_LIST, () => {
       if (opts.url.indexOf(`/_api/web/AllProperties?$select=storageentitiesindex`) > -1) {
         if (opts.headers.accept &&
           opts.headers.accept.indexOf('application/json') === 0) {
-            return Promise.resolve({ storageentitiesindex: 'a' });
+          return Promise.resolve({ storageentitiesindex: 'a' });
         }
       }
 
       return Promise.reject('Invalid request');
     });
-    cmdInstance.action({ options: { debug: true, appCatalogUrl: 'https://contoso.sharepoint.com/sites/appcatalog' }}, (err?: any) => {
+    cmdInstance.action({ options: { debug: true, appCatalogUrl: 'https://contoso.sharepoint.com/sites/appcatalog' } }, (err?: any) => {
       try {
         assert.equal(JSON.stringify(err), JSON.stringify(new CommandError('Unexpected token a in JSON at position 0')));
         done();
@@ -258,35 +258,35 @@ describe(commands.STORAGEENTITY_LIST, () => {
   });
 
   it('accepts valid SharePoint Online app catalog URL', () => {
-    const actual = (command.validate() as CommandValidate)({ options: { appCatalogUrl: 'https://contoso.sharepoint.com/sites/appcatalog' }});
+    const actual = (command.validate() as CommandValidate)({ options: { appCatalogUrl: 'https://contoso.sharepoint.com/sites/appcatalog' } });
     assert.equal(actual, true);
   });
 
   it('accepts valid SharePoint Online site URL', () => {
-    const actual = (command.validate() as CommandValidate)({ options: { appCatalogUrl: 'https://contoso.sharepoint.com' }});
+    const actual = (command.validate() as CommandValidate)({ options: { appCatalogUrl: 'https://contoso.sharepoint.com' } });
     assert.equal(actual, true);
   });
 
   it('rejects invalid SharePoint Online URL', () => {
     const url = 'http://contoso';
-    const actual = (command.validate() as CommandValidate)({ options: { appCatalogUrl: url }});
+    const actual = (command.validate() as CommandValidate)({ options: { appCatalogUrl: url } });
     assert.equal(actual, `${url} is not a valid SharePoint Online site URL`);
   });
 
   it('fails validation when no SharePoint Online app catalog URL specified', () => {
-    const actual = (command.validate() as CommandValidate)({ options: { }});
+    const actual = (command.validate() as CommandValidate)({ options: {} });
     assert.equal(actual, 'Missing required option appCatalogUrl');
   });
 
   it('has help referring to the right command', () => {
     const cmd: any = {
-      log: (msg: string) => {},
-      prompt: () => {},
-      helpInformation: () => {}
+      log: (msg: string) => { },
+      prompt: () => { },
+      helpInformation: () => { }
     };
     const find = sinon.stub(vorpal, 'find').callsFake(() => cmd);
     cmd.help = command.help();
-    cmd.help({}, () => {});
+    cmd.help({}, () => { });
     assert(find.calledWith(commands.STORAGEENTITY_LIST));
   });
 
@@ -296,12 +296,12 @@ describe(commands.STORAGEENTITY_LIST, () => {
       log: (msg: string) => {
         _log.push(msg);
       },
-      prompt: () => {},
-      helpInformation: () => {}
+      prompt: () => { },
+      helpInformation: () => { }
     };
     sinon.stub(vorpal, 'find').callsFake(() => cmd);
     cmd.help = command.help();
-    cmd.help({}, () => {});
+    cmd.help({}, () => { });
     let containsExamples: boolean = false;
     _log.forEach(l => {
       if (l && l.indexOf('Examples:') > -1) {
@@ -314,7 +314,7 @@ describe(commands.STORAGEENTITY_LIST, () => {
 
   it('handles promise rejection', (done) => {
     sinon.stub(request, 'get').callsFake(() => Promise.reject('error'));
-    
+
     cmdInstance.action({
       options: { debug: true, appCatalogUrl: 'https://contoso.sharepoint.com/sites/appcatalog' }
     }, (err?: any) => {
