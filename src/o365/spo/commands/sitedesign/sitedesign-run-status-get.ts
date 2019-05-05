@@ -1,4 +1,3 @@
-import auth from '../../SpoAuth';
 import config from '../../../../config';
 import request from '../../../../request';
 import commands from '../../commands';
@@ -9,7 +8,6 @@ import SpoCommand from '../../SpoCommand';
 import Utils from '../../../../Utils';
 import GlobalOptions from '../../../../GlobalOptions';
 import { SiteScriptActionStatus } from './SiteScriptActionStatus';
-import { Auth } from '../../../../Auth';
 
 const vorpal: Vorpal = require('../../../../vorpal-init');
 
@@ -32,15 +30,6 @@ class SpoSiteDesignRunStatusGetCommand extends SpoCommand {
   }
 
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
-    const resource: string = Auth.getResourceFromUrl(args.options.webUrl);
-
-    auth
-      .getAccessToken(resource, auth.service.refreshToken as string, cmd, this.debug)
-      .then((accessToken: string): Promise<{ value: SiteScriptActionStatus[] }> => {
-        if (this.debug) {
-          cmd.log(`Retrieved access token ${accessToken}. Retrieving site designs applied to the site...`);
-        }
-
         const body: any = {
           runId: args.options.runId
         };
@@ -48,7 +37,6 @@ class SpoSiteDesignRunStatusGetCommand extends SpoCommand {
         const requestOptions: any = {
           url: `${args.options.webUrl}/_api/Microsoft.Sharepoint.Utilities.WebTemplateExtensions.SiteScriptUtility.GetSiteDesignRunStatus`,
           headers: {
-            authorization: `Bearer ${accessToken}`,
             accept: 'application/json;odata=nometadata',
             'content-type': 'application/json;odata=nometadata'
           },
@@ -56,8 +44,7 @@ class SpoSiteDesignRunStatusGetCommand extends SpoCommand {
           json: true
         };
 
-        return request.post(requestOptions);
-      })
+       request.post<{ value: SiteScriptActionStatus[] }>(requestOptions)
       .then((res: { value: SiteScriptActionStatus[] }): void => {
         if (args.options.output === 'json') {
           cmd.log(res.value);
@@ -123,15 +110,8 @@ class SpoSiteDesignRunStatusGetCommand extends SpoCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to a SharePoint Online site
-    using the ${chalk.blue(commands.LOGIN)} command.
-        
-  Remarks:
-
-    To list information about site scripts executed for the specified site
-    design, you have to first log in to a SharePoint site using the
-    ${chalk.blue(commands.LOGIN)} command, eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN} https://contoso.sharepoint.com`)}.
-
+      `  Remarks:
+      
     For text output mode, displays the name of the action, site script and the
     outcome of the action. For JSON output mode, displays all available
     information.

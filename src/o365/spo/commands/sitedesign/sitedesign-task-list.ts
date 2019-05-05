@@ -1,4 +1,3 @@
-import auth from '../../SpoAuth';
 import config from '../../../../config';
 import request from '../../../../request';
 import commands from '../../commands';
@@ -8,7 +7,6 @@ import {
 import SpoCommand from '../../SpoCommand';
 import GlobalOptions from '../../../../GlobalOptions';
 import { SiteDesignTask } from './SiteDesignTask';
-import { Auth } from '../../../../Auth';
 
 const vorpal: Vorpal = require('../../../../vorpal-init');
 
@@ -30,26 +28,15 @@ class SpoSiteDesignTaskListCommand extends SpoCommand {
   }
 
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
-    const resource: string = Auth.getResourceFromUrl(args.options.webUrl);
+    const requestOptions: any = {
+      url: `${args.options.webUrl}/_api/Microsoft.Sharepoint.Utilities.WebTemplateExtensions.SiteScriptUtility.GetSiteDesignTasks`,
+      headers: {
+        accept: 'application/json;odata=nometadata',
+      },
+      json: true
+    };
 
-    auth
-      .getAccessToken(resource, auth.service.refreshToken as string, cmd, this.debug)
-      .then((accessToken: string): Promise<{ value: SiteDesignTask[] }> => {
-        if (this.debug) {
-          cmd.log(`Retrieved access token ${accessToken}. Retrieving site designs scheduled for execution on the specified site...`);
-        }
-
-        const requestOptions: any = {
-          url: `${args.options.webUrl}/_api/Microsoft.Sharepoint.Utilities.WebTemplateExtensions.SiteScriptUtility.GetSiteDesignTasks`,
-          headers: {
-            authorization: `Bearer ${accessToken}`,
-            accept: 'application/json;odata=nometadata',
-          },
-          json: true
-        };
-
-        return request.post(requestOptions);
-      })
+    request.post<{ value: SiteDesignTask[] }>(requestOptions)
       .then((res: { value: SiteDesignTask[] }): void => {
         if (args.options.output === 'json') {
           cmd.log(res.value);
@@ -103,17 +90,7 @@ class SpoSiteDesignTaskListCommand extends SpoCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to a SharePoint Online site
-    using the ${chalk.blue(commands.LOGIN)} command.
-        
-  Remarks:
-
-    To list information about site designs scheduled for execution on the
-    specified site, you have to first log in to a SharePoint site
-    using the ${chalk.blue(commands.LOGIN)} command,
-    eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN} https://contoso.sharepoint.com`)}.
-
-  Examples:
+      `  Examples:
   
     List site designs scheduled for execution on the specified site
       ${chalk.grey(config.delimiter)} ${this.name} --webUrl https://contoso.sharepoint.com/sites/team-a

@@ -1,4 +1,3 @@
-import auth from '../../SpoAuth';
 import config from '../../../../config';
 import request from '../../../../request';
 import commands from '../../commands';
@@ -29,21 +28,13 @@ class SpoStorageEntityGetCommand extends SpoCommand {
   }
 
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
-    if (this.debug) {
-      cmd.log(`Retrieving access token for ${auth.service.resource}...`);
-    }
-
-    auth
-      .ensureAccessToken(auth.service.resource, cmd, this.debug)
-      .then((accessToken: string): Promise<TenantProperty> => {
-        if (this.debug) {
-          cmd.log(`Retrieved access token ${accessToken}. Loading details for the ${args.options.key} tenant property...`);
-        }
-
+    this
+      .getSpoAdminUrl(cmd, this.debug)
+      .then((spoAdminUrl: string): Promise<TenantProperty> => {
+       
         const requestOptions: any = {
-          url: `${auth.site.url}/_api/web/GetStorageEntity('${encodeURIComponent(args.options.key)}')`,
+          url: `${spoAdminUrl}/_api/web/GetStorageEntity('${encodeURIComponent(args.options.key)}')`,
           headers: {
-            authorization: `Bearer ${accessToken}`,
             accept: 'application/json;odata=nometadata'
           },
           json: true
@@ -83,13 +74,7 @@ class SpoStorageEntityGetCommand extends SpoCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(commands.STORAGEENTITY_GET).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to a SharePoint Online site using the
-        ${chalk.blue(commands.LOGIN)} command.
-        
-  Remarks:
-
-    To get details of a tenant property, you have to first log in to a SharePoint site using the
-    ${chalk.blue(commands.LOGIN)} command, eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN} https://contoso.sharepoint.com`)}.
+      `  Remarks:
 
     Tenant properties are stored in the app catalog site associated with the site to which you are
     currently logged in. When retrieving the specified tenant property, SharePoint will automatically

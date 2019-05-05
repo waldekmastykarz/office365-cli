@@ -1,5 +1,3 @@
-import auth from '../../../../Auth';
-import { Auth } from '../../../../Auth';
 import config from '../../../../config';
 import request from '../../../../request';
 import commands from '../../commands';
@@ -31,12 +29,6 @@ class SpoStorageEntityListCommand extends SpoCommand {
   }
 
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
-    const resource: string = Auth.getResourceFromUrl(args.options.appCatalogUrl);
-
-    if (this.debug) {
-      cmd.log(`Retrieving access token for ${resource} using refresh token ${auth.service.refreshToken}...`);
-    }
-
     if (this.verbose) {
       cmd.log(`Retrieving details for all tenant properties in ${args.options.appCatalogUrl}...`);
     }
@@ -114,13 +106,7 @@ class SpoStorageEntityListCommand extends SpoCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(commands.STORAGEENTITY_LIST).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to a SharePoint Online site using the
-  ${chalk.blue(commands.LOGIN)} command.
-        
-  Remarks:
-
-    To list tenant properties, you have to first log in to a SharePoint site using the
-    ${chalk.blue(commands.LOGIN)} command, eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN} https://contoso.sharepoint.com`)}.
+      `  Remarks:
 
     Tenant properties are stored in the app catalog site. To list all tenant properties,
     you have to specify the absolute URL of the app catalog site. If you specify an incorrect

@@ -34,10 +34,6 @@ class SpoStorageEntitySetCommand extends SpoCommand {
     return 'Sets tenant property on the specified SharePoint Online app catalog';
   }
 
-  protected requiresTenantAdmin(): boolean {
-    return true;
-  }
-
   public getTelemetryProperties(args: CommandArgs): any {
     const telemetryProps: any = super.getTelemetryProperties(args);
     telemetryProps.description = (!(!args.options.description)).toString();
@@ -135,15 +131,7 @@ class SpoStorageEntitySetCommand extends SpoCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(commands.STORAGEENTITY_SET).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to a SharePoint Online tenant admin site,
-  using the ${chalk.blue(commands.LOGIN)} command.
-                
-  Remarks:
-
-    To set a tenant property, you have to first log in to a tenant admin site using the
-    ${chalk.blue(commands.LOGIN)} command, eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN} https://contoso-admin.sharepoint.com`)}.
-    If you are logged in to a different site and will try to manage tenant properties,
-    you will get an error.
+      `  Remarks:
 
     Tenant properties are stored in the app catalog site associated with that tenant.
     To set a property, you have to specify the absolute URL of the app catalog site.

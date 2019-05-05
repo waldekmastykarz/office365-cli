@@ -1,4 +1,3 @@
-import auth from '../../SpoAuth';
 import config from '../../../../config';
 import request from '../../../../request';
 import commands from '../../commands';
@@ -40,7 +39,7 @@ class SpoSiteDesignSetCommand extends SpoCommand {
     const telemetryProps: any = super.getTelemetryProperties(args);
     telemetryProps.title = typeof args.options.title !== 'undefined';
     telemetryProps.webTemplate = args.options.webTemplate;
-    telemetryProps.numSiteScripts = args.options.siteScripts ? args.options.siteScripts.split(',').length : 0;
+    telemetryProps.siteScripts = typeof args.options.siteScripts !== 'undefined';
     telemetryProps.description = typeof args.options.description !== 'undefined';
     telemetryProps.previewImageUrl = typeof args.options.previewImageUrl !== 'undefined';
     telemetryProps.previewImageAltText = typeof args.options.previewImageAltText !== 'undefined';
@@ -50,12 +49,10 @@ class SpoSiteDesignSetCommand extends SpoCommand {
   }
 
   public commandAction(cmd: CommandInstance, args: CommandArgs, cb: () => void): void {
-    auth
-      .ensureAccessToken(auth.service.resource, cmd, this.debug)
-      .then((accessToken: string): Promise<any> => {
-        if (this.debug) {
-          cmd.log(`Retrieved access token ${accessToken}. Updating site design...`);
-        }
+
+    this
+      .getSpoAdminUrl(cmd, this.debug)
+      .then((spoAdminUrl: string): Promise<any> => {
 
         const updateInfo: any = {
           Id: args.options.id
@@ -87,9 +84,8 @@ class SpoSiteDesignSetCommand extends SpoCommand {
         }
 
         const requestOptions: any = {
-          url: `${auth.site.url}/_api/Microsoft.Sharepoint.Utilities.WebTemplateExtensions.SiteScriptUtility.UpdateSiteDesign`,
+          url: `${spoAdminUrl}/_api/Microsoft.Sharepoint.Utilities.WebTemplateExtensions.SiteScriptUtility.UpdateSiteDesign`,
           headers: {
-            authorization: `Bearer ${auth.service.accessToken}`,
             'content-type': 'application/json;charset=utf-8',
             accept: 'application/json;odata=nometadata',
             json: true
@@ -201,14 +197,7 @@ class SpoSiteDesignSetCommand extends SpoCommand {
     const chalk = vorpal.chalk;
     log(vorpal.find(this.name).helpInformation());
     log(
-      `  ${chalk.yellow('Important:')} before using this command, log in to a SharePoint Online site
-    using the ${chalk.blue(commands.LOGIN)} command.
-        
-  Remarks:
-
-    To update a site design, you have to first log in to a SharePoint site
-    using the ${chalk.blue(commands.LOGIN)} command,
-    eg. ${chalk.grey(`${config.delimiter} ${commands.LOGIN} https://contoso.sharepoint.com`)}.
+      `  Remarks:
 
     If you had previously set the ${chalk.blue('isDefault')} option to ${chalk.grey('true')},
     and wish for it to remain ${chalk.grey('true')}, you must pass in this option
