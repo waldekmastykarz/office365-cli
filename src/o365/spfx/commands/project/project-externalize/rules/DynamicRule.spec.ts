@@ -57,6 +57,33 @@ describe('DynamicRule', () => {
     assert.equal(findings.length, 1);
   });
 
+  it('returns globalName if module type is script', async () => {
+    const project: Project = {
+      path: '/usr/tmp',
+      packageJson: {
+        dependencies: {
+          '@pnp/pnpjs': '1.3.5'
+        }
+      }
+    };
+    const originalReadFileSync = fs.readFileSync;
+    sinon.stub(fs, 'readFileSync').callsFake((path: string) => {
+      if (path.endsWith('@pnp/pnpjs/package.json')) {
+        return JSON.stringify({
+          main: "./dist/pnpjs.es5.umd.bundle.js",
+          module: "./dist/pnpjs.es5.umd.bundle.min.js"
+        });
+      }
+      else {
+        return originalReadFileSync(path);
+      }
+    });
+    sinon.stub(request, 'head').callsFake(() => Promise.resolve());
+    sinon.stub(request, 'post').callsFake(() => Promise.resolve({ scriptType: 'script' }));
+    const findings = await rule.visit(project);
+    assert.equal(findings.length, 1);
+  });
+
   it('doesn\'t return anything is package is unsupported', async () => {
     const project: Project = {
       path: '/usr/tmp',

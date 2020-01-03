@@ -7,7 +7,6 @@ import request from '../../../../../../request';
 export class DynamicRule extends BasicDependencyRule {
   private restrictedModules = ['react', 'react-dom', '@pnp/sp-clientsvc', '@pnp/sp-taxonomy'];
   private restrictedNamespaces = ['@types/', '@microsoft/'];
-  private static readonly EARLY_EXIT = 'EARLY_EXIT';
 
   public visit(project: Project): Promise<ExternalizeEntry[]> {
     return new Promise<ExternalizeEntry[]>((resolve: (result: ExternalizeEntry[]) => void, reject: (err: any) => void): void => {
@@ -25,8 +24,6 @@ export class DynamicRule extends BasicDependencyRule {
           resolve(res
             .filter(x => x !== undefined)
             .map(x => x as ExternalizeEntry));
-        }, (err: any): void => {
-          reject(err);
         });
     });
   }
@@ -40,33 +37,23 @@ export class DynamicRule extends BasicDependencyRule {
         return resolve(undefined);
       }
 
-      let url: string = this.getFileUrl(packageName, version, filePath);
+      let url: string = `https://unpkg.com/${packageName}@${version}/${filePath}`;
       let minUrl: string = url;
-      let testResult: boolean = false;
 
       this
         .testUrl(url)
-        .then((urlExists: boolean): Promise<boolean> => {
-          testResult = urlExists;
-
-          if (!testResult) {
-            resolve(undefined);
-            return Promise.reject(DynamicRule.EARLY_EXIT);
-          }
+        .then((): Promise<void> => {
 
           if (!url.endsWith('.min.js')) {
             minUrl = url.replace('.js', '.min.js');
             return this.testUrl(minUrl);
           }
           else {
-            return Promise.resolve(testResult);
+            return Promise.resolve();
           }
         })
-        .then((urlExists: boolean): Promise<'script' | 'module'> => {
-          if (urlExists) {
-            url = minUrl;
-            testResult = true;
-          }
+        .then((): Promise<'script' | 'module'> => {
+          url = minUrl;
 
           return this.getModuleType(url);
         })
@@ -76,10 +63,8 @@ export class DynamicRule extends BasicDependencyRule {
             path: url,
             globalName: moduleType === 'script' ? packageName : undefined,
           } as ExternalizeEntry);
-        }, (err: any) => {
-          if (err !== DynamicRule.EARLY_EXIT) {
-            reject(err);
-          }
+        }, () => {
+          return resolve(undefined);
         });
     });
   }
@@ -101,41 +86,37 @@ export class DynamicRule extends BasicDependencyRule {
     });
   }
 
-  private getFileUrl(packageName: string, version: string, filePath: string) {
-    return `https://unpkg.com/${packageName}@${version}/${filePath}`;
-  }
-
-  private testUrl(url: string): Promise<boolean> {
-    return new Promise<boolean>((resolve: (urlExists: boolean) => void, reject: (err: any) => void): void => {
+  private testUrl(url: string): Promise<void> {
+    return new Promise<void>((resolve: () => void, reject: () => void): void => {
       request
         .head({ url: url, headers: { 'x-anonymous': 'true' } })
         .then(() => {
-          resolve(true);
+          return resolve();
         }, () => {
-          resolve(false);
+          return reject();
         });
     });
   }
 
   private getFilePath(packageName: string): string | undefined {
+    let result: string | undefined = undefined;
+
     const packageJsonFilePath: string = `node_modules/${packageName}/package.json`;
 
     try {
       const packageJson: { module?: any, main?: any } = JSON.parse(fs.readFileSync(packageJsonFilePath, 'utf8'));
 
       if (packageJson.module) {
-        return packageJson.module;
+        result = packageJson.module;
       }
       else if (packageJson.main) {
-        return packageJson.main;
+        result = packageJson.main;
       }
-      else {
-        return undefined;
-      }
+    } catch {
+      // file doesn't exist, giving up
     }
-    catch { // file doesn't exist, giving up
-      return undefined;
-    }
+    
+    return result;
   }
 
   private cleanFilePath(filePath: string | undefined): string | undefined {
