@@ -106,7 +106,7 @@ class SpoFileAddCommand extends SpoCommand {
       cmd.log('Check if the specified folder exists.')
       cmd.log('');
     }
-    
+
     if (this.debug) {
       cmd.log(`file name: ${fileName}...`);
     }
@@ -165,7 +165,7 @@ class SpoFileAddCommand extends SpoCommand {
               'accept': 'application/json;odata=nometadata'
             }
           };
-    
+
           return request.post<void>(requestOptions)
             .then((): Promise<void> => {
               // session started successfully, now upload our file chunks
@@ -181,7 +181,9 @@ class SpoFileAddCommand extends SpoCommand {
                 Size: fileSize
               };
 
-              return this.uploadFileChunks(fileUploadInfo, cmd)
+              return new Promise<void>((resolve: () => void, reject: (err: any) => void): void => {
+                this.uploadFileChunks(fileUploadInfo, cmd, resolve, reject);
+              })
                 .then((): Promise<void> => {
                   if (this.verbose) {
                     cmd.log(`Finished uploading ${fileUploadInfo.Position} bytes in ${fileChunkCount} chunks`)
@@ -199,7 +201,7 @@ class SpoFileAddCommand extends SpoCommand {
                       'accept': 'application/json;odata=nometadata'
                     }
                   };
-              
+
                   return request.post<void>(requestOptions)
                     .then((): Promise<void> => {
                       return Promise.reject(err);  // original error
@@ -568,7 +570,7 @@ class SpoFileAddCommand extends SpoCommand {
       });
   }
 
-  private uploadFileChunks(info: FileUploadInfo, cmd: any): Promise<void> {
+  private uploadFileChunks(info: FileUploadInfo, cmd: any, resolve: () => void, reject: (err: any) => void): void {
     let fd: number = 0;
     try {
       fd = fs.openSync(info.FilePath, 'r');
@@ -590,17 +592,18 @@ class SpoFileAddCommand extends SpoCommand {
         }
       };
 
-      return request.post<void>(requestOptions)
-        .then((): Promise<void> => {
+      request
+        .post<void>(requestOptions)
+        .then((): void => {
           if (this.verbose) {
             cmd.log(`Uploaded ${info.Position} of ${info.Size} bytes (${Math.round(100 * info.Position / info.Size)}%)`);
           }
 
           if (isLastChunk) {
-            return Promise.resolve();
+            resolve();
           }
           else {
-            return this.uploadFileChunks(info, cmd);
+            this.uploadFileChunks(info, cmd, resolve, reject);
           }
         })
         .catch((err: any) => {
@@ -609,27 +612,30 @@ class SpoFileAddCommand extends SpoCommand {
               cmd.log(`Retrying to upload chunk due to error: ${err}`);
             }
             info.Position -= readCount;  // rewind
-            return this.uploadFileChunks(info, cmd);
+            this.uploadFileChunks(info, cmd, resolve, reject);
           }
           else {
-            return Promise.reject(err);
+            reject(err);
           }
         });
-    } catch(err) {
+    }
+    catch (err) {
       if (fd) {
         try {
           fs.closeSync(fd);
-        } catch(e) {}
+          /* c8 ignore next */
+        }
+        catch { }
       }
 
       if (--info.RetriesLeft > 0) {
         if (this.verbose) {
           cmd.log(`Retrying to read chunk due to error: ${err}`);
         }
-        return this.uploadFileChunks(info, cmd);
+        this.uploadFileChunks(info, cmd, resolve, reject);
       }
       else {
-        return Promise.reject(err);
+        reject(err);
       }
     }
   }
