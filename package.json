@@ -21,7 +21,9 @@
     "build": "tsc -p . && node scripts/copy-files.js",
     "watch": "tsc -w -p .",
     "clean": "rimraf ./dist",
-    "test": "c8 mocha \"dist/**/*.spec.js\""
+    "test": "c8 mocha \"dist/**/*.spec.js\"",
+    "snyk-protect": "snyk protect",
+    "prepublish": "npm run snyk-protect"
   },
   "keywords": [
     "office 365",
@@ -133,7 +135,8 @@
     "update-notifier": "^4.1.0",
     "uuid": "^7.0.3",
     "vorpal": "https://github.com/pnp/vorpal/raw/master/vorpal-1.11.8.tgz",
-    "xmldom": "^0.3.0"
+    "xmldom": "^0.3.0",
+    "snyk": "^1.336.0"
   },
   "devDependencies": {
     "@types/easy-table": "0.0.32",
@@ -153,5 +156,6 @@
     "mocha": "^7.1.1",
     "rimraf": "^3.0.2",
     "sinon": "^9.0.2"
-  }
+  },
+  "snyk": true
 }
