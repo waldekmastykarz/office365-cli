@@ -592,4 +592,10 @@ export default class Utils {
         return filtered;
       }, {});
   }
+
+  public static getEnums(en: any): string[] {
+    return Object
+      .keys(en)
+      .filter(k => isNaN(parseInt(k)));
+  }
 }

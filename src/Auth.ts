@@ -16,6 +16,13 @@ export interface AccessToken {
   value: string;
 }
 
+export enum CloudType {
+  AzureCloud,
+  AzureUSGovernment,
+  AzureGermanCloud,
+  AzureChinaCloud
+};
+
 export class Service {
   connected: boolean = false;
   refreshToken?: string;
@@ -27,6 +34,7 @@ export class Service {
   accessTokens: Hash<AccessToken>;
   spoUrl?: string;
   tenantId?: string;
+  cloudType: CloudType = CloudType.AzureCloud;
 
   constructor() {
     this.accessTokens = {};
@@ -43,6 +51,7 @@ export class Service {
     this.thumbprint = undefined;
     this.spoUrl = undefined;
     this.tenantId = undefined;
+    this.cloudType = CloudType.AzureCloud;
   }
 }
 
@@ -54,23 +63,45 @@ export enum AuthType {
 }
 
 export class Auth {
-  protected authCtx: AuthenticationContext;
+  private authCtx: AuthenticationContext;
   private userCodeInfo?: UserCodeInfo;
   private _service: Service;
   private appId: string;
+  private static cloudEndpoints: any[] = [];
 
   public get service(): Service {
     return this._service;
   }
 
   public get defaultResource(): string {
-    return 'https://graph.microsoft.com';
+    return Auth.getEndpointForResource('https://graph.microsoft.com', this._service.cloudType);
   }
 
   constructor() {
     this.appId = config.cliAadAppId;
     this._service = new Service();
-    this.authCtx = new AuthenticationContext(`https://login.microsoftonline.com/${config.tenant}`);
+    this.authCtx = new AuthenticationContext(`${Auth.getEndpointForResource('https://login.microsoftonline.com', this._service.cloudType)}/${config.tenant}`);
+  }
+
+  public static initialize(): void {
+    this.cloudEndpoints[CloudType.AzureUSGovernment] = {
+      'https://graph.microsoft.com': 'https://graph.microsoft.us',
+      'https://graph.windows.net': 'https://graph.windows.net',
+      'https://management.azure.com/': 'https://management.usgovcloudapi.net/',
+      'https://login.microsoftonline.com': 'https://login.microsoftonline.us'
+    };
+    this.cloudEndpoints[CloudType.AzureGermanCloud] = {
+      'https://graph.microsoft.com': 'https://graph.microsoft.us',
+      'https://graph.windows.net': 'https://graph.windows.net',
+      'https://management.azure.com/': 'https://management.usgovcloudapi.net/',
+      'https://login.microsoftonline.com': 'https://login.microsoftonline.de'
+    };
+    this.cloudEndpoints[CloudType.AzureChinaCloud] = {
+      'https://graph.microsoft.com': 'https://graph.microsoft.de',
+      'https://graph.windows.net': 'https://graph.cloudapi.de',
+      'https://management.azure.com/': 'https://management.microsoftazure.de',
+      'https://login.microsoftonline.com': 'https://login.chinacloudapi.cn'
+    };
   }
 
   public restoreAuth(): Promise<void> {
@@ -79,6 +110,7 @@ export class Auth {
         .getServiceConnectionInfo<Service>()
         .then((service: Service): void => {
           this._service = Object.assign(this._service, service);
+          this.setAuthContext();
           resolve();
         }, (error: any): void => {
           resolve();
@@ -532,6 +564,22 @@ export class Auth {
   public getTokenStorage(): TokenStorage {
     return new FileTokenStorage();
   }
+
+  public static getEndpointForResource(resource: string, cloudType: CloudType): string {
+    if (Auth.cloudEndpoints[cloudType] &&
+      Auth.cloudEndpoints[cloudType][resource]) {
+      return Auth.cloudEndpoints[cloudType][resource];
+    }
+    else {
+      return resource;
+    }
+  }
+
+  public setAuthContext(): void {
+    this.authCtx = new AuthenticationContext(`${Auth.getEndpointForResource('https://login.microsoftonline.com', this._service.cloudType)}/${config.tenant}`);
+  }
 }
+
+Auth.initialize();
 
 export default new Auth();

@@ -1,5 +1,5 @@
 import Axios, { AxiosError, AxiosInstance, AxiosPromise, AxiosRequestConfig, AxiosResponse } from 'axios';
-import auth, { Auth } from './Auth';
+import auth, { Auth, CloudType } from './Auth';
 import { Logger } from './cli';
 import Utils from './Utils';
 const packageJSON = require('../package.json');
@@ -101,6 +101,8 @@ class Request {
       return Promise.reject('Logger not set on the request object');
     }
 
+    this.updateRequestForCloudType(options, auth.service.cloudType);
+
     return new Promise<TResponse>((_resolve: (res: TResponse) => void, _reject: (error: any) => void): void => {
       const resource: string = Auth.getResourceFromUrl(options.url as string);
 
@@ -155,6 +157,16 @@ class Request {
           }
         });
     });
+  }
+
+  private updateRequestForCloudType(options: AxiosRequestConfig, cloudType: CloudType): void {
+    if (!options.url) {
+      return;
+    }
+
+    const resource: string = Auth.getResourceFromUrl(options.url);
+    const cloudUrl: string = Auth.getEndpointForResource(resource, cloudType);
+    options.url = options.url.replace(resource, cloudUrl);
   }
 }
 

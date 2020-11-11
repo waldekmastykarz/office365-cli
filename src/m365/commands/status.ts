@@ -1,4 +1,4 @@
-import auth, { AuthType } from '../../Auth';
+import auth, { AuthType, CloudType } from '../../Auth';
 import { Logger } from '../../cli';
 import Command, { CommandArgs, CommandError } from '../../Command';
 import Utils from '../../Utils';
@@ -19,6 +19,7 @@ class StatusCommand extends Command {
         logger.log({
           connectedAs: Utils.getUserNameFromAccessToken(auth.service.accessTokens[auth.defaultResource].value),
           authType: AuthType[auth.service.authType],
+          cloudType: CloudType[auth.service.cloudType],
           accessTokens: JSON.stringify(auth.service.accessTokens, null, 2),
           refreshToken: auth.service.refreshToken
         });
