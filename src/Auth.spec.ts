@@ -517,6 +517,7 @@ describe('Auth', () => {
     auth.ensureAccessToken(resource, logger, true).then((accessToken) => {
       try {
         assert(ensureAccessTokenWithCertificate.called);
+        assert.strictEqual(ensureAccessTokenWithCertificate.lastCall.args[3], "ccf4f2a3c3d209c512b3724bb883a5474c0921dc");
         done();
       }
       catch (e) {
@@ -541,6 +542,7 @@ describe('Auth', () => {
         assert.strictEqual(ensureAccessTokenStub.lastCall.args[0], "https://contoso.sharepoint.com");
         assert.strictEqual(ensureAccessTokenStub.lastCall.args[1], "9bc3ab49-b65d-410a-85ad-de819febfddc");
         assert.notStrictEqual(ensureAccessTokenStub.lastCall.args[2].indexOf("MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQ"), -1);
+        assert.strictEqual(ensureAccessTokenStub.lastCall.args[3], "ccf4f2a3c3d209c512b3724bb883a5474c0921dc");        
         done();
       }
       catch (e) {
