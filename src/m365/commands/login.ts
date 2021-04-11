@@ -1,11 +1,12 @@
 import * as fs from 'fs';
-import auth, { AuthType } from '../../Auth';
+import auth, { AuthType, CloudType } from '../../Auth';
 import { Logger } from '../../cli';
 import Command, {
   CommandError, CommandOption
 } from '../../Command';
 import config from '../../config';
 import GlobalOptions from '../../GlobalOptions';
+import Utils from '../../Utils';
 import commands from './commands';
 
 interface CommandArgs {
@@ -21,6 +22,7 @@ interface Options extends GlobalOptions {
   thumbprint?: string;
   appId?: string;
   tenant?: string;
+  cloud?: string;
 }
 
 class LoginCommand extends Command {
@@ -35,6 +37,13 @@ class LoginCommand extends Command {
   public getTelemetryProperties(args: CommandArgs): any {
     const telemetryProps: any = super.getTelemetryProperties(args);
     telemetryProps.authType = args.options.authType || 'deviceCode';
+    telemetryProps.certificateFile = typeof args.options.certificateFile !== 'undefined';
+    telemetryProps.cloud = typeof args.options.cloud !== 'undefined';
+    telemetryProps.password = typeof args.options.password !== 'undefined';
+    telemetryProps.thumbprint = typeof args.options.thumbprint !== 'undefined';
+    telemetryProps.userName = typeof args.options.userName !== 'undefined';
+    telemetryProps.appId = typeof args.options.appId !== 'undefined';
+    telemetryProps.tenant = typeof args.options.tenant !== 'undefined';
     return telemetryProps;
   }
 
@@ -73,6 +82,13 @@ class LoginCommand extends Command {
         case 'browser':
           auth.service.authType = AuthType.Browser;
           break;
+      }
+
+      if (args.options.cloud) {
+        auth.service.cloudType = CloudType[args.options.cloud as keyof typeof CloudType];
+      }
+      else {
+        auth.service.cloudType = CloudType.AzureCloud;
       }
 
       auth
@@ -143,6 +159,9 @@ class LoginCommand extends Command {
       },
       {
         option: '--tenant [tenant]'
+      },
+      {
+        option: '--cloud [cloud]'
       }
     ];
 
@@ -175,6 +194,11 @@ class LoginCommand extends Command {
           return `File '${args.options.certificateFile}' does not exist`;
         }
       }
+    }
+
+    if (args.options.cloud &&
+      typeof CloudType[args.options.cloud as keyof typeof CloudType] === 'undefined') {
+      return `${args.options.cloud} is not a valid value for cloud. Valid options are ${Utils.getEnums(CloudType).join(', ')}`;
     }
 
     return true;
