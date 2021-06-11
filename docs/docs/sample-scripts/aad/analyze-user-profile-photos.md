@@ -13,233 +13,235 @@ Prerequisites
 !!! note
     If you don't already have an [Azure Cognitive Services instance and key](https://azure.microsoft.com/try/cognitive-services/), create a cognitive service instance and get API key from there.
 
-```powershell tab="PowerShell Core"
-$resultDir = "Output"
-$azureVisionApiInstance = "azure-vision-api-instance-name"
-$azureVisionApiKey = "azure-vision-api-key"
+=== "PowerShell Core"
 
-$photoRequirements = @{
-    requirePortrait   = $false
-    allowClipart      = $true
-    allowLinedrawing  = $true
-    allowAdult        = $false
-    allowRacy         = $false
-    allowGory         = $false
-    photoRequirements = @{
-        requirePortrait   = $false
-        allowClipart      = $true
-        allowLinedrawing  = $true
-        allowAdult        = $false
-        allowRacy         = $false
-        allowGory         = $false
-        forbiddenKeywords = @("cartoon", `
-                "animal", `
-                "nude", `
-                "child", `
-                "people", `
-                "group", `
-                "family", `
-                "several", `
-                "crowd", `
-                "food", `
-                "restaurant", `
-                "train", `
-                "bus", `
-                "car", `
-                "airplane", `
-                "vehicle", `
-                "platform", `
-                "station", `
-                "standing", `
-                "flying", `
-                "suitcase", `
-                "screenshot", `
-                "newspaper", `
-                "typography", `
-                "font", `
-                "document", `
-                "sport")
-    }
-}
+  ```powershell
+  $resultDir = "Output"
+  $azureVisionApiInstance = "azure-vision-api-instance-name"
+  $azureVisionApiKey = "azure-vision-api-key"
 
-$requiredProfileProperties = "id,displayName,userPrincipalName"
-$global:analysisOutcomes = @()
+  $photoRequirements = @{
+      requirePortrait   = $false
+      allowClipart      = $true
+      allowLinedrawing  = $true
+      allowAdult        = $false
+      allowRacy         = $false
+      allowGory         = $false
+      photoRequirements = @{
+          requirePortrait   = $false
+          allowClipart      = $true
+          allowLinedrawing  = $true
+          allowAdult        = $false
+          allowRacy         = $false
+          allowGory         = $false
+          forbiddenKeywords = @("cartoon", `
+                  "animal", `
+                  "nude", `
+                  "child", `
+                  "people", `
+                  "group", `
+                  "family", `
+                  "several", `
+                  "crowd", `
+                  "food", `
+                  "restaurant", `
+                  "train", `
+                  "bus", `
+                  "car", `
+                  "airplane", `
+                  "vehicle", `
+                  "platform", `
+                  "station", `
+                  "standing", `
+                  "flying", `
+                  "suitcase", `
+                  "screenshot", `
+                  "newspaper", `
+                  "typography", `
+                  "font", `
+                  "document", `
+                  "sport")
+      }
+  }
 
-$executionDir = $PSScriptRoot
-$outputDir = "$executionDir/$resultDir"
-$outputFilePath = "$outputDir/$(get-date -f yyyyMMdd-HHmmss)-scan-profile-pictures-outcome.csv"
+  $requiredProfileProperties = "id,displayName,userPrincipalName"
+  $global:analysisOutcomes = @()
 
-if (-not (Test-Path -Path "$outputDir" -PathType Container)) {
-    New-Item -ItemType Directory -Path "$outputDir"
-    Write-Host "Created $outputDir folder..."
-}
-function AddAnalysisOutcome {
-    param (
-        [Parameter(Mandatory = $false)] [string] $UserId,
-        [Parameter(Mandatory = $false)] [string] $UserPrincipalName,
-        [Parameter(Mandatory = $false)] [bool] $IsPortraitValid,
-        [Parameter(Mandatory = $false)] [bool] $IsOnlyOnePersonValid,
-        [Parameter(Mandatory = $false)] [bool] $IsClipartValid,
-        [Parameter(Mandatory = $false)] [bool] $IsLineDrawingValid,
-        [Parameter(Mandatory = $false)] [bool] $IsAdultValid,
-        [Parameter(Mandatory = $false)] [bool] $IsRacyValid,
-        [Parameter(Mandatory = $false)] [bool] $IsGoryValid,
-        [Parameter(Mandatory = $false)] [bool] $IsCelebrity,
-        [Parameter(Mandatory = $false)] [bool] $IsForbiddenKeywordExist,
-        [Parameter(Mandatory = $false)] [bool] $IsValidProfilePhoto,
-        [Parameter(Mandatory = $false)] [string] $Notes
-    )
+  $executionDir = $PSScriptRoot
+  $outputDir = "$executionDir/$resultDir"
+  $outputFilePath = "$outputDir/$(get-date -f yyyyMMdd-HHmmss)-scan-profile-pictures-outcome.csv"
 
-    $analysisOutcome = New-Object -TypeName PSObject
+  if (-not (Test-Path -Path "$outputDir" -PathType Container)) {
+      New-Item -ItemType Directory -Path "$outputDir"
+      Write-Host "Created $outputDir folder..."
+  }
+  function AddAnalysisOutcome {
+      param (
+          [Parameter(Mandatory = $false)] [string] $UserId,
+          [Parameter(Mandatory = $false)] [string] $UserPrincipalName,
+          [Parameter(Mandatory = $false)] [bool] $IsPortraitValid,
+          [Parameter(Mandatory = $false)] [bool] $IsOnlyOnePersonValid,
+          [Parameter(Mandatory = $false)] [bool] $IsClipartValid,
+          [Parameter(Mandatory = $false)] [bool] $IsLineDrawingValid,
+          [Parameter(Mandatory = $false)] [bool] $IsAdultValid,
+          [Parameter(Mandatory = $false)] [bool] $IsRacyValid,
+          [Parameter(Mandatory = $false)] [bool] $IsGoryValid,
+          [Parameter(Mandatory = $false)] [bool] $IsCelebrity,
+          [Parameter(Mandatory = $false)] [bool] $IsForbiddenKeywordExist,
+          [Parameter(Mandatory = $false)] [bool] $IsValidProfilePhoto,
+          [Parameter(Mandatory = $false)] [string] $Notes
+      )
 
-    $analysisOutcome | Add-Member -MemberType NoteProperty -Name "UserId" -Value $UserId
-    $analysisOutcome | Add-Member -MemberType NoteProperty -Name "UserPrincipalName" -Value $UserPrincipalName
-    $analysisOutcome | Add-Member -MemberType NoteProperty -Name "IsPortraitValid" -Value $IsPortraitValid
-    $analysisOutcome | Add-Member -MemberType NoteProperty -Name "IsOnlyOnePersonValid" -Value $IsOnlyOnePersonValid
-    $analysisOutcome | Add-Member -MemberType NoteProperty -Name "IsClipartValid" -Value $IsClipartValid
-    $analysisOutcome | Add-Member -MemberType NoteProperty -Name "IsLineDrawingValid" -Value $IsLineDrawingValid
-    $analysisOutcome | Add-Member -MemberType NoteProperty -Name "IsAdultValid" -Value $IsAdultValid
-    $analysisOutcome | Add-Member -MemberType NoteProperty -Name "IsRacyValid" -Value $IsRacyValid
-    $analysisOutcome | Add-Member -MemberType NoteProperty -Name "IsGoryValid" -Value $IsGoryValid
-    $analysisOutcome | Add-Member -MemberType NoteProperty -Name "IsCelebrity" -Value $IsCelebrity
-    $analysisOutcome | Add-Member -MemberType NoteProperty -Name "IsForbiddenKeywordExist" -Value $IsForbiddenKeywordExist
-    $analysisOutcome | Add-Member -MemberType NoteProperty -Name "IsValidProfilePhoto" -Value $IsValidProfilePhoto
-    $analysisOutcome | Add-Member -MemberType NoteProperty -Name "Notes" -Value $Notes
+      $analysisOutcome = New-Object -TypeName PSObject
 
-    $global:analysisOutcomes += $analysisOutcome
-}
+      $analysisOutcome | Add-Member -MemberType NoteProperty -Name "UserId" -Value $UserId
+      $analysisOutcome | Add-Member -MemberType NoteProperty -Name "UserPrincipalName" -Value $UserPrincipalName
+      $analysisOutcome | Add-Member -MemberType NoteProperty -Name "IsPortraitValid" -Value $IsPortraitValid
+      $analysisOutcome | Add-Member -MemberType NoteProperty -Name "IsOnlyOnePersonValid" -Value $IsOnlyOnePersonValid
+      $analysisOutcome | Add-Member -MemberType NoteProperty -Name "IsClipartValid" -Value $IsClipartValid
+      $analysisOutcome | Add-Member -MemberType NoteProperty -Name "IsLineDrawingValid" -Value $IsLineDrawingValid
+      $analysisOutcome | Add-Member -MemberType NoteProperty -Name "IsAdultValid" -Value $IsAdultValid
+      $analysisOutcome | Add-Member -MemberType NoteProperty -Name "IsRacyValid" -Value $IsRacyValid
+      $analysisOutcome | Add-Member -MemberType NoteProperty -Name "IsGoryValid" -Value $IsGoryValid
+      $analysisOutcome | Add-Member -MemberType NoteProperty -Name "IsCelebrity" -Value $IsCelebrity
+      $analysisOutcome | Add-Member -MemberType NoteProperty -Name "IsForbiddenKeywordExist" -Value $IsForbiddenKeywordExist
+      $analysisOutcome | Add-Member -MemberType NoteProperty -Name "IsValidProfilePhoto" -Value $IsValidProfilePhoto
+      $analysisOutcome | Add-Member -MemberType NoteProperty -Name "Notes" -Value $Notes
 
-$users = m365 aad user list --properties $requiredProfileProperties -o json | ConvertFrom-Json -AsHashtable
-$usersCount = $users.Count
-Write-Host "Number of users found : $usersCount"
+      $global:analysisOutcomes += $analysisOutcome
+  }
 
-try {
-    $token = m365 util accesstoken get --resource https://graph.microsoft.com
+  $users = m365 aad user list --properties $requiredProfileProperties -o json | ConvertFrom-Json -AsHashtable
+  $usersCount = $users.Count
+  Write-Host "Number of users found : $usersCount"
 
-    $i = 0
+  try {
+      $token = m365 util accesstoken get --resource https://graph.microsoft.com
 
-    for ($i = 0; $i -lt $usersCount; $i++) {
-        try {
-            $userId = $users[$i].id
-            $userPrincipalName = $users[$i].userPrincipalName
+      $i = 0
 
-            $percentComplete = ($i / $usersCount) * 100
-            Write-Progress -Activity "Analysing" -Status "User : $userId - $userPrincipalName" -PercentComplete $percentComplete
+      for ($i = 0; $i -lt $usersCount; $i++) {
+          try {
+              $userId = $users[$i].id
+              $userPrincipalName = $users[$i].userPrincipalName
 
-            try {
-                $headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
-                $headers.Add("Content-Type", "image/jpg")
-                $headers.Add("Authorization", "Bearer $token")
-                $userPhoto = (Invoke-RestMethod -Uri "https://graph.microsoft.com/v1.0/users/$userId/photo/`$value" -Headers $headers)
+              $percentComplete = ($i / $usersCount) * 100
+              Write-Progress -Activity "Analysing" -Status "User : $userId - $userPrincipalName" -PercentComplete $percentComplete
 
-                if ($userPhoto) {
-                    try {
-                        $headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
-                        $headers.Add("Content-Type", "application/json")
-                        $headers.Add("Ocp-Apim-Subscription-Key", $azureVisionApiKey)
+              try {
+                  $headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
+                  $headers.Add("Content-Type", "image/jpg")
+                  $headers.Add("Authorization", "Bearer $token")
+                  $userPhoto = (Invoke-RestMethod -Uri "https://graph.microsoft.com/v1.0/users/$userId/photo/`$value" -Headers $headers)
 
-                        $analysis = (Invoke-RestMethod -Uri ("https://$azureVisionApiInstance.cognitiveservices.azure.com/vision/v3.1/analyze?visualFeatures=Categories,Adult,Tags,Description,Faces,Color,ImageType,Objects&details=Celebrities&language=en") `
-                                -Headers $headers `
-                                -Body ($userPhoto) `
-                                -ContentType "application/octet-stream" `
-                                -Method "Post");
+                  if ($userPhoto) {
+                      try {
+                          $headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
+                          $headers.Add("Content-Type", "application/json")
+                          $headers.Add("Ocp-Apim-Subscription-Key", $azureVisionApiKey)
 
-                        if ($analysis) {
-                            $analysisData = $analysis | ConvertFrom-Json -AsHashtable
-                            $isPortrait = $analysisData.categories.Length -gt 0 ? ($analysisData.categories | Where-Object { $_.name -eq 'people_portrait' }).Length -gt 0  ? $true : $false : $false
-                            $isPortraitValid = $photoRequirements.requirePortrait ? $isPortrait : $true
-                            $isOnlyOnePersonValid = $analysisData.faces.Length -eq 1 ? $true : $false
-                            $isClipartValid = $analysisData.imageType.clipArtType -eq 0 ? $true : $false
-                            $isLineDrawingValid = $analysisData.imageType.lineDrawingType -eq 0 ? $true : $false
-                            $isAdultValid = $photoRequirements.allowAdult ? $true : !$analysisData.adult.isAdultContent
-                            $isRacyValid = $photoRequirements.allowRacy ? $true : !$analysisData.adult.isRacyContent
-                            $isGoryValid = $photoRequirements.allowGory ? $true : !$analysisData.adult.isGoryContent
-                            $isCelebrity = ($analysisData.categories | Where-Object { $_.detail.celebrities.Length -gt 0 }).Length -gt 0 ? $true : $false
+                          $analysis = (Invoke-RestMethod -Uri ("https://$azureVisionApiInstance.cognitiveservices.azure.com/vision/v3.1/analyze?visualFeatures=Categories,Adult,Tags,Description,Faces,Color,ImageType,Objects&details=Celebrities&language=en") `
+                                  -Headers $headers `
+                                  -Body ($userPhoto) `
+                                  -ContentType "application/octet-stream" `
+                                  -Method "Post");
 
-                            $invalidKeywords = @()
+                          if ($analysis) {
+                              $analysisData = $analysis | ConvertFrom-Json -AsHashtable
+                              $isPortrait = $analysisData.categories.Length -gt 0 ? ($analysisData.categories | Where-Object { $_.name -eq 'people_portrait' }).Length -gt 0  ? $true : $false : $false
+                              $isPortraitValid = $photoRequirements.requirePortrait ? $isPortrait : $true
+                              $isOnlyOnePersonValid = $analysisData.faces.Length -eq 1 ? $true : $false
+                              $isClipartValid = $analysisData.imageType.clipArtType -eq 0 ? $true : $false
+                              $isLineDrawingValid = $analysisData.imageType.lineDrawingType -eq 0 ? $true : $false
+                              $isAdultValid = $photoRequirements.allowAdult ? $true : !$analysisData.adult.isAdultContent
+                              $isRacyValid = $photoRequirements.allowRacy ? $true : !$analysisData.adult.isRacyContent
+                              $isGoryValid = $photoRequirements.allowGory ? $true : !$analysisData.adult.isGoryContent
+                              $isCelebrity = ($analysisData.categories | Where-Object { $_.detail.celebrities.Length -gt 0 }).Length -gt 0 ? $true : $false
 
-                            foreach ($forbiddenKeyword in $photoRequirements.forbiddenKeywords) {
-                                $isForbiddenKeywordExist = ($analysisData.tags | Where-Object { $_.name -eq $forbiddenKeyword }).Length -gt 0 ? $true : $false
+                              $invalidKeywords = @()
 
-                                if ($isForbiddenKeywordExist) {
-                                    $invalidKeyword = New-Object -TypeName PSObject
-                                    $invalidKeyword | Add-Member -MemberType NoteProperty -Name forbiddenKeyword -Value $forbiddenKeyword
-                                    $invalidKeywords += $invalidKeyword
-                                }
-                            }
+                              foreach ($forbiddenKeyword in $photoRequirements.forbiddenKeywords) {
+                                  $isForbiddenKeywordExist = ($analysisData.tags | Where-Object { $_.name -eq $forbiddenKeyword }).Length -gt 0 ? $true : $false
 
-                            $isForbiddenKeywordExist = $invalidKeywords.Length -gt 0 ? $true : $false
+                                  if ($isForbiddenKeywordExist) {
+                                      $invalidKeyword = New-Object -TypeName PSObject
+                                      $invalidKeyword | Add-Member -MemberType NoteProperty -Name forbiddenKeyword -Value $forbiddenKeyword
+                                      $invalidKeywords += $invalidKeyword
+                                  }
+                              }
 
-                            $isValidProfilePhoto = $isPortraitValid `
-                                -and $isOnlyOnePersonValid `
-                                -and $isClipartValid  `
-                                -and $isLineDrawingValid `
-                                -and $isAdultValid `
-                                -and $isRacyValid `
-                                -and $isGoryValid `
-                                -and !$isCelebrity `
-                                -and !$isForbiddenKeywordExist;
+                              $isForbiddenKeywordExist = $invalidKeywords.Length -gt 0 ? $true : $false
 
-                            AddAnalysisOutcome $userId `
-                                $userPrincipalName `
-                                $isPortraitValid `
-                                $isOnlyOnePersonValid `
-                                $isClipartValid `
-                                $isLineDrawingValid `
-                                $isAdultValid `
-                                $isRacyValid `
-                                $isGoryValid `
-                                $isCelebrity `
-                                $isForbiddenKeywordExist `
-                                $isValidProfilePhoto `
-                                "Profile photo available"
-                        }
-                    }
-                    catch {
-                        AddAnalysisOutcome $userId `
-                            $userPrincipalName `
-                            $false `
-                            $false `
-                            $false `
-                            $false `
-                            $false `
-                            $false `
-                            $false `
-                            $false `
-                            $false `
-                            $false `
-                            "Unable to analyze profile photo"
-                    }
-                }
-            }
-            catch {
-                AddAnalysisOutcome $userId `
-                    $userPrincipalName `
-                    $false `
-                    $false `
-                    $false `
-                    $false `
-                    $false `
-                    $false `
-                    $false `
-                    $false `
-                    $false `
-                    $false `
-                    "Unable to get profile photo"
-            }
-        }
-        catch {
-            Write-Host "Unable to get profile details for this user" -ForegroundColor Red
-        }
-    }
-}
-catch {
-    Write-Host "Unable to get new access token" -ForegroundColor Red
-}
+                              $isValidProfilePhoto = $isPortraitValid `
+                                  -and $isOnlyOnePersonValid `
+                                  -and $isClipartValid  `
+                                  -and $isLineDrawingValid `
+                                  -and $isAdultValid `
+                                  -and $isRacyValid `
+                                  -and $isGoryValid `
+                                  -and !$isCelebrity `
+                                  -and !$isForbiddenKeywordExist;
 
-$global:analysisOutcomes | Export-Csv -Path "$outputFilePath" -NoTypeInformation
-Write-Host "Open $outputFilePath to review analysis outcomes report."
-```
+                              AddAnalysisOutcome $userId `
+                                  $userPrincipalName `
+                                  $isPortraitValid `
+                                  $isOnlyOnePersonValid `
+                                  $isClipartValid `
+                                  $isLineDrawingValid `
+                                  $isAdultValid `
+                                  $isRacyValid `
+                                  $isGoryValid `
+                                  $isCelebrity `
+                                  $isForbiddenKeywordExist `
+                                  $isValidProfilePhoto `
+                                  "Profile photo available"
+                          }
+                      }
+                      catch {
+                          AddAnalysisOutcome $userId `
+                              $userPrincipalName `
+                              $false `
+                              $false `
+                              $false `
+                              $false `
+                              $false `
+                              $false `
+                              $false `
+                              $false `
+                              $false `
+                              $false `
+                              "Unable to analyze profile photo"
+                      }
+                  }
+              }
+              catch {
+                  AddAnalysisOutcome $userId `
+                      $userPrincipalName `
+                      $false `
+                      $false `
+                      $false `
+                      $false `
+                      $false `
+                      $false `
+                      $false `
+                      $false `
+                      $false `
+                      $false `
+                      "Unable to get profile photo"
+              }
+          }
+          catch {
+              Write-Host "Unable to get profile details for this user" -ForegroundColor Red
+          }
+      }
+  }
+  catch {
+      Write-Host "Unable to get new access token" -ForegroundColor Red
+  }
+
+  $global:analysisOutcomes | Export-Csv -Path "$outputFilePath" -NoTypeInformation
+  Write-Host "Open $outputFilePath to review analysis outcomes report."
+  ```
 
 Keywords:
 
